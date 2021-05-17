@@ -1,4 +1,4 @@
-# DragDropDraw :hand:
+# DragDropDraw :hand::pencil2:
 
 Simple study project for use in private projects, which implements drawing, drag and drop, resize and guide lines using mouse events and angular
 
