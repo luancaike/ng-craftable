@@ -4,14 +4,122 @@
   width: 100%;
   height: 100%;
   overflow: auto;
+  user-select: none;
 }
+
 .canvas-container {
-   position: absolute;
+  position: absolute;
   width: 900px;
   height: 1280px;
   background: white;
   flex: 0 0 900px;
+
+  .line-guide-y, .line-guide-x {
+    z-index: 1;
+    background: #c4c4c4;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  .line-guide-y {
+    height: 1px;
+    width: 100%;
+
+  }
+
+  .line-guide-x {
+    height: 100%;
+    width: 1px;
+  }
+
+  .lego-item {
+    position: absolute;
+    background: white;
+    outline: grey 1px solid;
+    z-index: 2;
+
+    &.select {
+      position: absolute;
+      outline: deepskyblue 2px solid;
+
+      .lego-container {
+        cursor: move;
+      }
+    }
+
+    .lego-container {
+      height: 100%;
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .resize-handler {
+      position: absolute;
+
+      &.top, &.bottom {
+        width: 100%;
+        height: 10px;
+        left: 0;
+        cursor: n-resize;
+      }
+
+      &.top {
+        top: -2px;
+      }
+
+      &.bottom {
+        bottom: -2px;
+      }
+
+      &.left, &.right {
+        cursor: e-resize;
+        width: 10px;
+        height: 100%;
+        top: 0;
+      }
+
+      &.left {
+        left: -2px;
+      }
+
+      &.right {
+        right: -2px;
+      }
+
+      &.left-top, &.right-top, &.left-bottom, &.right-bottom {
+        height: 20px;
+        width: 20px;
+      }
+
+      &.left-top {
+        top: -2px;
+        left: -2px;
+        cursor: nw-resize;
+      }
+
+      &.right-top {
+        top: -2px;
+        right: -2px;
+        cursor: ne-resize;
+      }
+
+      &.left-bottom {
+        bottom: -2px;
+        left: -2px;
+        cursor: sw-resize;
+      }
+
+      &.right-bottom {
+        bottom: -2px;
+        right: -2px;
+        cursor: se-resize;
+      }
+    }
+  }
 }
+
 .draw-preview {
   position: absolute;
   top: 0;
@@ -20,8 +128,11 @@
   width: 10px;
   border: grey 1px dashed;
 }
+
 .btn-draw {
   position: absolute;
   top: 0;
   left: 0;
 }
+
+

@@ -1,6 +1,38 @@
 <div class="workspace" #workspace>
-  <div class="canvas-container" #canvasContainer>
+  <div class="canvas-container" #canvasContainer (mousedown)="initDraw($event)">
     <div class="draw-preview"></div>
+    <ng-container *ngFor="let item of allLegoConfig; trackBy: trackById">
+      <div
+        #lego
+        [class.select]="selectedLego === lego"
+        class="lego-item"
+        [style.width.px]="item.width"
+        [style.height.px]="item.height"
+        [style.left.px]="item.x"
+        [style.top.px]="item.y"
+      >
+        <div class="resize-handler left" (mousedown)="resizeLeft($event, item)"></div>
+        <div class="resize-handler top" (mousedown)="resizeTop($event, item)"></div>
+        <div class="resize-handler right" (mousedown)="resizeRight($event, item)"></div>
+        <div class="resize-handler bottom" (mousedown)="resizeBottom($event, item)"></div>
+
+        <div class="resize-handler left-top" (mousedown)="resizeLeft($event, item) || resizeTop($event, item)"></div>
+        <div class="resize-handler right-top" (mousedown)="resizeRight($event, item) || resizeTop($event, item)"></div>
+        <div class="resize-handler left-bottom" (mousedown)="resizeLeft($event, item) || resizeBottom($event, item)"></div>
+        <div class="resize-handler right-bottom" (mousedown)="resizeRight($event, item) || resizeBottom($event, item)"></div>
+
+        <div class="lego-container" (mousedown)="selectLego($event, item, lego)"></div>
+      </div>
+      <ng-container *ngFor="let line of item.lineGuides.y;">
+        <div class="line-guide-y"
+             [style.top.px]="line"
+        ></div>
+      </ng-container>
+      <ng-container *ngFor="let line of item.lineGuides.x">
+        <div class="line-guide-x"
+             [style.left.px]="line"></div>
+      </ng-container>
+    </ng-container>
   </div>
 </div>
-<button class="btn-draw" (click)="isDrawMode = !isDrawMode">Draw Mode</button>
+<button class="btn-draw" (click)="isDrawMode = true">Draw Mode</button>
