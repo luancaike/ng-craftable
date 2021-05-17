@@ -124,5 +124,8 @@
       }
     }
   },
-  "defaultProject": "drag-drop-draw"
+  "defaultProject": "drag-drop-draw",
+  "cli": {
+    "analytics": false
+  }
 }
