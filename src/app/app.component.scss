@@ -7,19 +7,19 @@
   user-select: none;
 }
 
-.canvas-container {
+.guide-container {
   position: absolute;
   width: 900px;
-  height: 1280px;
-  background: white;
-  flex: 0 0 900px;
+  height: 1200px;
 
   .line-guide-y, .line-guide-x {
-    z-index: 1;
-    background: #c4c4c4;
+    z-index: 2;
+    box-sizing: border-box;
     position: absolute;
     left: 0;
     top: 0;
+    background: deepskyblue;
+    color: deepskyblue;
   }
 
   .line-guide-y {
@@ -32,16 +32,24 @@
     height: 100%;
     width: 1px;
   }
+}
+
+.canvas-container {
+  position: absolute;
+  width: 900px;
+  height: 1200px;
+  background: white;
+  flex: 0 0 900px;
 
   .lego-item {
     position: absolute;
-    background: white;
-    outline: grey 1px solid;
+    box-sizing: border-box;
+    background: rgba(0, 191, 255, 0.5);
     z-index: 2;
 
     &.select {
       position: absolute;
-      outline: deepskyblue 2px solid;
+      border: deepskyblue 2px solid;
 
       .lego-container {
         cursor: move;
@@ -66,11 +74,11 @@
       }
 
       &.top {
-        top: -2px;
+        top: -5px;
       }
 
       &.bottom {
-        bottom: -2px;
+        bottom: -5px;
       }
 
       &.left, &.right {
@@ -81,11 +89,11 @@
       }
 
       &.left {
-        left: -2px;
+        left: -5px;
       }
 
       &.right {
-        right: -2px;
+        right: -5px;
       }
 
       &.left-top, &.right-top, &.left-bottom, &.right-bottom {
@@ -94,26 +102,26 @@
       }
 
       &.left-top {
-        top: -2px;
-        left: -2px;
+        top: -5px;
+        left: -5px;
         cursor: nw-resize;
       }
 
       &.right-top {
-        top: -2px;
-        right: -2px;
+        top: -5px;
+        right: -5px;
         cursor: ne-resize;
       }
 
       &.left-bottom {
-        bottom: -2px;
-        left: -2px;
+        bottom: -5px;
+        left: -5px;
         cursor: sw-resize;
       }
 
       &.right-bottom {
-        bottom: -2px;
-        right: -2px;
+        bottom: -5px;
+        right: -5px;
         cursor: se-resize;
       }
     }
@@ -121,6 +129,7 @@
 }
 
 .draw-preview {
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -128,11 +137,4 @@
   width: 10px;
   border: grey 1px dashed;
 }
-
-.btn-draw {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
 

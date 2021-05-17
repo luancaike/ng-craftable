@@ -1,6 +1,6 @@
 import {DOCUMENT} from '@angular/common';
 import {AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild, ViewEncapsulation} from '@angular/core';
-import {fromEvent, Subscription} from 'rxjs';
+import {fromEvent} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
 
 @Component({
@@ -12,24 +12,23 @@ import {takeUntil} from 'rxjs/operators';
 export class AppComponent implements AfterViewInit, OnDestroy {
   @ViewChild('canvasContainer') canvasContainerRef: ElementRef<HTMLElement>;
   @ViewChild('workspace') workspaceRef: ElementRef<HTMLElement>;
-  public allLegoConfig = [
-    {
-      id: 1,
-      height: 256,
-      width: 540,
-      x: 107,
-      y: 170,
-      lineGuides: {
-        x: [107, 377, 647],
-        y: [170, 298, 426]
-      }
-    }
-  ];
-  public isDrawMode = false;
-  public selectedLego = null;
-  private subscriptions: Subscription[] = [];
+  @ViewChild('guideContainer') guideContainerRef: ElementRef<HTMLElement>;
+  public minWidth = 50;
+  public minHeight = 50;
+  public allLegoConfig = [];
+  lineGuides = {
+    x: [{parent: 'fixed', position: 0}, {parent: 'fixed', position: 450}, {parent: 'fixed', position: 900}],
+    y: [{parent: 'fixed', position: 0}, {parent: 'fixed', position: 600}, {parent: 'fixed', position: 1200}]
+  };
+  public isDrawMode = true;
+  public isDragging = false;
+  public selectedLego = [];
 
   constructor(@Inject(DOCUMENT) private document: Document) {
+  }
+
+  get guideContainer(): HTMLElement {
+    return this.guideContainerRef.nativeElement;
   }
 
   get canvasContainer(): HTMLElement {
@@ -77,9 +76,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   getMaxAndMinBounds(): any {
     const maxBoundX =
-      this.canvasContainer.offsetLeft + this.canvasContainer.offsetWidth - 1;
+      this.canvasContainer.offsetLeft + this.canvasContainer.offsetWidth;
     const maxBoundY =
-      this.canvasContainer.offsetTop + this.canvasContainer.offsetHeight - 1;
+      this.canvasContainer.offsetTop + this.canvasContainer.offsetHeight;
     const minBoundX = this.canvasContainer.offsetLeft;
     const minBoundY = this.canvasContainer.offsetTop;
     return {maxBoundX, maxBoundY, minBoundX, minBoundY};
@@ -94,62 +93,60 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   initDraw(eventStart: MouseEvent): void {
-    const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
-    const {dragEnd$, drag$} = this.getMouseEvents();
-
-    if (!this.isDrawMode) {
+    if (this.isDragging) {
       return;
     }
+    const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
+    const {dragEnd$, drag$} = this.getMouseEvents();
     let dragEndSub;
     let dragSub;
     let debounced;
     let width = 0;
     let height = 0;
     const newLego: any = {};
-    const initialX = Math.abs(eventStart.pageX - minBoundX);
-    const initialY = Math.abs(eventStart.pageY - minBoundY);
-    newLego.x = initialX;
-    newLego.y = initialY;
+    const startX = eventStart.pageX - minBoundX;
+    const startY = eventStart.pageY - minBoundY;
+    newLego.x = startX;
+    newLego.y = startY;
     debounced = setTimeout(() => {
       this.stateDrawGuidelines();
-      this.changeDrawGuidelines(initialX, initialY);
       dragSub = drag$.subscribe(eventDrag => {
-
-        width = Math.max(minBoundX, Math.min(maxBoundX, eventDrag.pageX)) - initialX - minBoundX;
-        height = Math.max(minBoundY, Math.min(maxBoundY, eventDrag.pageY)) - initialY - minBoundY;
-
-        if (width < 0) {
-          width = Math.abs(width);
-          const newX = initialX - width;
-          newLego.x = newX;
-          this.changeDrawGuidelines(newX);
+        const mouseX = Math.max(minBoundX, Math.min(maxBoundX, eventDrag.pageX)) - minBoundX;
+        const mouseY = Math.max(minBoundY, Math.min(maxBoundY, eventDrag.pageY)) - minBoundY;
+        width = Math.abs(mouseX - startX);
+        height = Math.abs(mouseY - startY);
+        if (mouseX < startX) {
+          newLego.x = mouseX;
         }
-        if (height < 0) {
-          height = Math.abs(height);
-          const newY = initialY - height;
-          newLego.y = newY;
-          this.changeDrawGuidelines(null, newY);
+        if (mouseY < startY) {
+          newLego.y = mouseY;
         }
-        newLego.width = width < 50 ? 50 : width;
-        newLego.height = height < 50 ? 50 : height;
-        this.changeDrawGuidelines(null, null, width, height);
-
+        newLego.width = width;
+        newLego.height = height;
+        this.snapToGuideLine(newLego, true);
+        this.changeDrawGuidelines(newLego.x, newLego.y, newLego.width, newLego.height);
       });
     }, 300);
     dragEndSub = dragEnd$.subscribe(() => {
       clearTimeout(debounced);
+      this.hiddenAllHighlightLines();
       this.stateDrawGuidelines(false);
+      newLego.width = newLego.width < this.minWidth ? this.minWidth : newLego.width;
+      newLego.height = newLego.height < this.minHeight ? this.minHeight : newLego.height;
       if (width && height) {
         this.addNewLego(newLego);
-        this.isDrawMode = false;
         width = 0;
         height = 0;
       }
+      if (dragSub) {
+        dragSub.unsubscribe();
+      }
+      dragEndSub.unsubscribe();
     });
-    this.subscriptions.push.apply(this.subscriptions, [dragEndSub, dragSub]);
   }
 
   initDrag(eventStart: MouseEvent, item): void {
+    this.isDragging = true;
     const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
     const {dragEnd$, drag$} = this.getMouseEvents();
     const initialX = eventStart.pageX - minBoundX;
@@ -157,6 +154,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     const offsetX = initialX - (item.x);
     const offsetY = initialY - (item.y);
     let dragEndSub;
+    this.removeGuideLinesByLego(item);
     const dragSub = drag$.subscribe(eventDrag => {
       let newX = eventDrag.pageX - minBoundX - offsetX;
       let newY = eventDrag.pageY - minBoundY - offsetY;
@@ -164,110 +162,160 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       newY = newY + item.height + minBoundY > maxBoundY ? maxBoundY - minBoundY - item.height : newY;
       item.x = Math.max(0, newX);
       item.y = Math.max(0, newY);
+      this.snapToGuideLine(item);
       dragEndSub = dragEnd$.subscribe(() => {
+        this.hiddenAllHighlightLines();
+        this.calcLineGuides(item);
+        dragSub.unsubscribe();
+        dragEndSub.unsubscribe();
+        this.isDragging = false;
       });
     });
-    this.subscriptions.push.apply(this.subscriptions, [dragSub, dragEndSub]);
+  }
+
+  snapToGuideLine(item, isResize = false): void {
+    this.hiddenAllHighlightLines();
+    this.setGuidelineSnap('x', item, isResize);
+    this.setGuidelineSnap('y', item, isResize);
+  }
+
+  showHighlightLines(axis, position): void {
+    const className = 'line-guide-' + axis;
+    const element = this.document.createElement('div');
+    element.classList.add(className);
+    element.style[axis === 'x' ? 'left' : 'top'] = `${position}px`;
+    this.guideContainer.append(element);
+  }
+
+  hiddenAllHighlightLines(): void {
+    const data = this.document.querySelectorAll('[class*="line-guide-"]');
+    data.forEach(el => el.remove());
+  }
+
+  setGuidelineSnap(axis, lego, isResize = false): any {
+    const side = axis === 'x' ? 'width' : 'height';
+    const size = lego[side];
+    const distance = lego[axis];
+    const snapSize = 2;
+    const halfSideLength = Math.abs(size / 2);
+    const endDistance = distance + size;
+    const center = distance + halfSideLength;
+    for (const item of this.lineGuides[axis]) {
+      let showGuide = false;
+      if (Math.abs((item.position - distance)) <= snapSize) {
+        lego[axis] = item.position;
+        showGuide = true;
+      } else if (Math.abs(center - item.position) <= snapSize) {
+        if (isResize) {
+          lego[side] = Math.round(Math.abs(item.position - distance) * 2); // resize snap behavior
+        } else {
+          lego[axis] = item.position - halfSideLength;
+        }
+        showGuide = true;
+      } else if (Math.abs(endDistance - item.position) <= snapSize) {
+        if (isResize) {
+          lego[side] = Math.abs(item.position - distance);
+        } else {
+          lego[axis] = item.position - size;
+        }
+        showGuide = true;
+      }
+      if (showGuide) {
+        this.showHighlightLines(axis, item.position);
+      }
+    }
+
+  }
+
+  removeGuideLinesByLego(item): void {
+    this.lineGuides.x = this.lineGuides.x.filter(el => el.parent !== item.id);
+    this.lineGuides.y = this.lineGuides.y.filter(el => el.parent !== item.id);
+  }
+
+  calcLineGuides(item): void {
+    this.removeGuideLinesByLego(item);
+    this.lineGuides.x = [
+      ...this.lineGuides.x,
+      ...[
+        {parent: item.id, position: item.x},
+        {parent: item.id, position: item.x + Math.round(item.width / 2)},
+        {parent: item.id, position: item.x + item.width}
+      ]
+    ];
+    this.lineGuides.y = [
+      ...this.lineGuides.y,
+      ...[
+        {parent: item.id, position: item.y},
+        {parent: item.id, position: item.y + Math.round(item.height / 2)},
+        {parent: item.id, position: item.y + item.height}
+      ]
+    ];
   }
 
   addNewLego(newLego): void {
     newLego.id = this.allLegoConfig.length + 1;
+    this.calcLineGuides(newLego);
     this.allLegoConfig.push(newLego);
   }
 
   selectLego(eventStart: MouseEvent, item, lego: HTMLElement): void {
-    this.selectedLego = lego;
+    this.selectedLego = [lego];
     this.initDrag(eventStart, item);
   }
 
-  resizeLeft(eventStart: MouseEvent, item): void {
-    const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
+  resize(eventStart: MouseEvent, direction, item): void {
+    const {minBoundX, maxBoundX, maxBoundY, minBoundY} = this.getMaxAndMinBounds();
     let dragEndSub;
 
     const initialX = eventStart.pageX - minBoundX;
-    const offsetX = item.x;
-    const width = item.width;
-    const {dragEnd$, drag$} = this.getMouseEvents();
-
-    const dragSub = drag$.subscribe(eventDrag => {
-      const reduceX = eventDrag.pageX - initialX - minBoundX;
-      const reduceWidth = width - reduceX;
-      if (reduceWidth >= 50) {
-        item.x = Math.max(0, offsetX + reduceX);
-      }
-      if (item.x) {
-        item.width = Math.max(50, width - reduceX);
-      }
-      dragEndSub = dragEnd$.subscribe(() => {
-      });
-    });
-    this.subscriptions.push.apply(this.subscriptions, [dragSub, dragEndSub]);
-
-  }
-
-  resizeRight(eventStart: MouseEvent, item): void {
-    const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
-    let dragEndSub;
-
-    const initialX = eventStart.pageX - minBoundX;
-    const offsetX = item.x;
-    const width = item.width;
-    const {dragEnd$, drag$} = this.getMouseEvents();
-
-    const dragSub = drag$.subscribe(eventDrag => {
-      const reduceX = Math.min(maxBoundX, eventDrag.pageX) - initialX - minBoundX;
-      item.width = Math.max(50, width + reduceX);
-      dragEndSub = dragEnd$.subscribe(() => {
-      });
-    });
-    this.subscriptions.push.apply(this.subscriptions, [dragSub, dragEndSub]);
-
-  }
-
-  resizeTop(eventStart: MouseEvent, item): void {
-    const {minBoundY} = this.getMaxAndMinBounds();
-    let dragEndSub;
-
     const initialY = eventStart.pageY - minBoundY;
     const offsetY = item.y;
     const height = item.height;
+    const offsetX = item.x;
+    const width = item.width;
     const {dragEnd$, drag$} = this.getMouseEvents();
-
+    this.removeGuideLinesByLego(item);
     const dragSub = drag$.subscribe(eventDrag => {
-      const reduceY = eventDrag.pageY - initialY - minBoundY;
-      const reduceHeight = height - reduceY;
-      if (reduceHeight >= 50) {
-        item.y = Math.max(0, offsetY + reduceY);
+      if (direction === 'right') {
+        const reduceX = Math.min(maxBoundX, eventDrag.pageX) - initialX - minBoundX;
+        item.width = Math.max(this.minWidth, width + reduceX);
       }
-      if (item.y) {
-        item.height = Math.max(50, height - reduceY);
+      if (direction === 'left') {
+        const reduceX = eventDrag.pageX - initialX - minBoundX;
+        const reduceWidth = width - reduceX;
+        if (reduceWidth >= this.minWidth) {
+          item.x = Math.max(0, offsetX + reduceX);
+        }
+        if (item.x) {
+          item.width = Math.max(this.minWidth, width - reduceX);
+        }
       }
+
+      if (direction === 'top') {
+        const reduceY = eventDrag.pageY - initialY - minBoundY;
+        const reduceHeight = height - reduceY;
+        if (reduceHeight >= this.minHeight) {
+          item.y = Math.max(0, offsetY + reduceY);
+        }
+        if (item.y) {
+          item.height = Math.max(this.minHeight, height - reduceY);
+        }
+      }
+      if (direction === 'bottom') {
+        const reduceY = Math.min(maxBoundY, eventDrag.pageY) - initialY - minBoundY;
+        item.height = Math.max(this.minHeight, height + reduceY);
+      }
+
+      this.snapToGuideLine(item, true);
       dragEndSub = dragEnd$.subscribe(() => {
+        this.calcLineGuides(item);
+        this.hiddenAllHighlightLines();
+        dragSub.unsubscribe();
+        dragEndSub.unsubscribe();
       });
     });
-    this.subscriptions.push.apply(this.subscriptions, [dragSub, dragEndSub]);
-
-  }
-
-  resizeBottom(eventStart: MouseEvent, item): void {
-    const {maxBoundY, minBoundY} = this.getMaxAndMinBounds();
-    let dragEndSub;
-
-    const initialY = eventStart.pageY - minBoundY;
-    const height = item.height;
-    const {dragEnd$, drag$} = this.getMouseEvents();
-
-    const dragSub = drag$.subscribe(eventDrag => {
-      const reduceY = Math.min(maxBoundY, eventDrag.pageY) - initialY - minBoundY;
-      item.height = Math.max(50, height + reduceY);
-      dragEndSub = dragEnd$.subscribe(() => {
-      });
-    });
-    this.subscriptions.push.apply(this.subscriptions, [dragSub, dragEndSub]);
-
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(s => s && s.unsubscribe && s.unsubscribe());
   }
 }
