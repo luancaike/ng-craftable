@@ -22,6 +22,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   };
   public isDrawMode = true;
   public isDragging = false;
+  public isResizing = false;
   public selectedLego = [];
 
   constructor(@Inject(DOCUMENT) private document: Document) {
@@ -93,7 +94,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   initDraw(eventStart: MouseEvent): void {
-    if (this.isDragging) {
+    if (this.isDragging || this.isResizing) {
       return;
     }
     const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
@@ -264,6 +265,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   resize(eventStart: MouseEvent, direction, item): void {
+    this.isResizing = true;
     const {minBoundX, maxBoundX, maxBoundY, minBoundY} = this.getMaxAndMinBounds();
     let dragEndSub;
 
@@ -312,6 +314,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         this.hiddenAllHighlightLines();
         dragSub.unsubscribe();
         dragEndSub.unsubscribe();
+        this.isResizing = false;
       });
     });
   }
