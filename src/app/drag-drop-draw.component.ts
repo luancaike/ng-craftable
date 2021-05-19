@@ -85,16 +85,25 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initFixedGuide();
     this.fixScaleByScreen();
+    this.fixScaleSize();
     this.resize$ = fromEvent<MouseEvent>(window, 'resize').subscribe(() => {
       this.fixScaleByScreen();
+      this.fixScaleSize();
     });
 
     this.allLegoConfig.forEach(lego => this.calcLineGuides(lego));
   }
 
   fixScaleByScreen(): void {
-    this.scale = this.workspace.offsetWidth < 1400 ? this.workspace.offsetWidth / 1400 : 1;
+    this.scale = this.workspace.offsetWidth < 1500 ? this.workspace.offsetWidth / 1500 : 1;
     this.canvasContainer.style.transform = `scale(${this.scale})`;
+  }
+
+  fixScaleSize(): void {
+    const width = this.canvasContainer.offsetWidth;
+    const height = this.canvasContainer.offsetHeight;
+    this.document.querySelector<HTMLDivElement>('.scale-wrapper').style.width = `${width * this.scale}px`;
+    this.document.querySelector<HTMLDivElement>('.scale-wrapper').style.height = `${height * this.scale}px`;
   }
 
   initFixedGuide(): void {
@@ -155,7 +164,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.drawStart.emit(eventStart);
-    const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
+    const {minBoundX, minBoundY} = this.getMaxAndMinBounds();
     const {dragEnd$, drag$} = this.getMouseEvents();
     let dragEndSub;
     let dragSub;
@@ -211,7 +220,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.isDragging = true;
-    const {maxBoundX, maxBoundY, minBoundX, minBoundY} = this.getMaxAndMinBounds();
+    const {minBoundX, minBoundY} = this.getMaxAndMinBounds();
     const {dragEnd$, drag$} = this.getMouseEvents();
     const initialX = ((eventStart.pageX - minBoundX) / this.scale);
     const initialY = (eventStart.pageY - minBoundY) / this.scale;
@@ -222,8 +231,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     const dragSub = drag$.subscribe(eventDrag => {
       const newX = ((eventDrag.pageX - minBoundX) / this.scale) - offsetX;
       const newY = ((eventDrag.pageY - minBoundY) / this.scale) - offsetY;
-      item.x = Math.max(0, newX);
-      item.y = Math.max(0, newY);
+      item.x = newX;
+      item.y = newY;
       this.snapToGuideLine(item);
       dragEndSub = dragEnd$.subscribe(() => {
         this.hiddenAllHighlightLines();

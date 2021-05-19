@@ -6,13 +6,13 @@
   .sidebar {
     flex: 0 0 16.6666667%;
     height: calc(100vh - 50px);
-    background: red;
+    background: lightgrey;
     max-width: 16.6666667%;
   }
 
   .toolbar {
     height: 50px;
-    background: blue;
+    background: white;
     flex: 0 0 100%;
     max-width: 100%;
   }
@@ -22,12 +22,16 @@
   -webkit-user-select: none;
   user-select: none;
   box-sizing: border-box;
-  padding: 5%;
+  padding-top: 30px;
   flex: 0 0 83.3333333%;
   max-width: 83.3333333%;
   overflow: auto;
   height: calc(100vh - 50px);
   text-align: center;
+
+  .align-wrapper {
+    display: inline-block;
+  }
 }
 
 .guide-container {
@@ -36,38 +40,44 @@
   height: 100%;
 
   .line-guide-y, .line-guide-x {
-    z-index: 2;
+    z-index: 5;
     box-sizing: border-box;
     position: absolute;
     left: 0;
     top: 0;
-    background: deepskyblue;
-    color: deepskyblue;
+    background: red;
+    color: red;
   }
 
   .line-guide-y {
-    height: 2px;
+    height: 1px;
     width: 100%;
 
   }
 
   .line-guide-x {
     height: 100%;
-    width: 2px;
+    width: 1px;
   }
 }
 
 .canvas-container {
   position: relative;
-  width: 1123px;
-  height: 794px;
-  background: white;
+  width: 1366px;
+  height: 768px;
+  background-color: white;
   transform: scale(1);
   transform-origin: 0 0;
   box-sizing: border-box;
   left: 0;
   right: 0;
-  display: inline-block;
+  background-size: 10px 10px;
+  background-position: 1px 1px;
+  background-position-x: 1px;
+  background-position-y: 1px;
+  background-image: repeating-linear-gradient(
+      0deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 1px, transparent 1px, transparent 10px), repeating-linear-gradient(
+      -90deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 1px, transparent 1px, transparent 10px);
 
   .lego-item {
     position: absolute;
