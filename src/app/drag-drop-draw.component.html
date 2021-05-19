@@ -1,9 +1,14 @@
+<div class="ddd-area">
+
+<div class="toolbar"></div>
 <div class="workspace" #workspace>
-  <div class="guide-container" #guideContainer>
-  </div>
-  <div class="canvas-container" #canvasContainer (mousedown)="initDraw($event)">
+  <div class="canvas-container"
+       #canvasContainer
+       (mousedown)="initDraw($event)">
+    <div class="guide-container" #guideContainer>
+    </div>
     <div class="draw-preview"></div>
-    <ng-container *ngFor="let item of allLegoConfig; trackBy: trackById">
+    <ng-container *ngFor="let item of allLegoConfig;">
       <div
         #lego
         [class.select]="selectedLego.includes(lego)"
@@ -27,8 +32,13 @@
         <div class="resize-handler right-bottom"
              (mousedown)="resize($event,'right', item) || resize($event, 'bottom', item)"></div>
 
-        <div class="lego-container" (mousedown)="selectLego($event, item, lego)"></div>
+
+        <div class="lego-container" (mousedown)="selectLego($event, item, lego)">
+          <ng-template *ngIf="template" [ngTemplateOutlet]="template"></ng-template>
+        </div>
       </div>
     </ng-container>
   </div>
+</div>
+<div class="sidebar"></div>
 </div>

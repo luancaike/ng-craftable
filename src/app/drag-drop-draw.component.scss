@@ -1,16 +1,39 @@
-.workspace {
+.ddd-area {
   display: flex;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
+  flex-wrap: wrap;
+  position: relative;
+
+  .sidebar {
+    flex: 0 0 16.6666667%;
+    height: calc(100vh - 50px);
+    background: red;
+    max-width: 16.6666667%;
+  }
+
+  .toolbar {
+    height: 50px;
+    background: blue;
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+.workspace {
+  -webkit-user-select: none;
   user-select: none;
+  box-sizing: border-box;
+  padding: 5%;
+  flex: 0 0 83.3333333%;
+  max-width: 83.3333333%;
+  overflow: auto;
+  height: calc(100vh - 50px);
+  text-align: center;
 }
 
 .guide-container {
   position: absolute;
-  width: 900px;
-  height: 1200px;
+  width: 100%;
+  height: 100%;
 
   .line-guide-y, .line-guide-x {
     z-index: 2;
@@ -23,29 +46,35 @@
   }
 
   .line-guide-y {
-    height: 1px;
+    height: 2px;
     width: 100%;
 
   }
 
   .line-guide-x {
     height: 100%;
-    width: 1px;
+    width: 2px;
   }
 }
 
 .canvas-container {
-  position: absolute;
-  width: 900px;
-  height: 1200px;
+  position: relative;
+  width: 1123px;
+  height: 794px;
   background: white;
-  flex: 0 0 900px;
+  transform: scale(1);
+  transform-origin: 0 0;
+  box-sizing: border-box;
+  left: 0;
+  right: 0;
+  display: inline-block;
 
   .lego-item {
     position: absolute;
     box-sizing: border-box;
     background: rgba(0, 191, 255, 0.5);
     z-index: 2;
+    overflow: hidden;
 
     &.select {
       position: absolute;
@@ -68,32 +97,32 @@
 
       &.top, &.bottom {
         width: 100%;
-        height: 10px;
+        height: 5px;
         left: 0;
         cursor: n-resize;
       }
 
       &.top {
-        top: -5px;
+        top: 0;
       }
 
       &.bottom {
-        bottom: -5px;
+        bottom: 0;
       }
 
       &.left, &.right {
         cursor: e-resize;
-        width: 10px;
+        width: 5px;
         height: 100%;
         top: 0;
       }
 
       &.left {
-        left: -5px;
+        left: 0;
       }
 
       &.right {
-        right: -5px;
+        right: 0;
       }
 
       &.left-top, &.right-top, &.left-bottom, &.right-bottom {
@@ -102,26 +131,26 @@
       }
 
       &.left-top {
-        top: -5px;
-        left: -5px;
+        top: 0;
+        left: 0;
         cursor: nw-resize;
       }
 
       &.right-top {
-        top: -5px;
-        right: -5px;
+        top: 0;
+        right: 0;
         cursor: ne-resize;
       }
 
       &.left-bottom {
-        bottom: -5px;
-        left: -5px;
+        bottom: 0;
+        left: 0;
         cursor: sw-resize;
       }
 
       &.right-bottom {
-        bottom: -5px;
-        right: -5px;
+        bottom: 0;
+        right: 0;
         cursor: se-resize;
       }
     }
