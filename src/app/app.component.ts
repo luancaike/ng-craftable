@@ -4,7 +4,9 @@ import {Component} from '@angular/core';
   selector: 'app-root',
   template: `
     <drag-drop-draw>
-      <ng-template #template let-data style="margin-left: 10px">Total</ng-template>
+      <ng-template #template let-data>
+        {{data | json}}
+      </ng-template>
     </drag-drop-draw>
   `
 })

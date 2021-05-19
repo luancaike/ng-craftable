@@ -42,7 +42,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   @Input() public minHeight = 50;
   @Input() public enableResize = true;
   @Input() public enableDrag = true;
-  @Input() public enableDraw = true;
+  @Input() public drawItemData: any = {teste: 'ABC'};
+  @Input() public enableDraw = false;
   @Input() public isDragging = false;
   @Input() public isResizing = false;
   @Input() public scale = 1;
@@ -60,6 +61,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   };
   public selectedLego = [];
   private resize$: Subscription;
+  private resizeDebounce;
 
   constructor(@Inject(DOCUMENT) private document: Document) {
   }
@@ -87,8 +89,11 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     this.fixScaleByScreen();
     this.fixScaleSize();
     this.resize$ = fromEvent<MouseEvent>(window, 'resize').subscribe(() => {
-      this.fixScaleByScreen();
-      this.fixScaleSize();
+      clearTimeout(this.resizeDebounce);
+      this.resizeDebounce = setTimeout(() => {
+        this.fixScaleByScreen();
+        this.fixScaleSize();
+      }, 100);
     });
 
     this.allLegoConfig.forEach(lego => this.calcLineGuides(lego));
@@ -160,7 +165,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   }
 
   initDraw(eventStart: MouseEvent): void {
-    if (this.isDragging || this.isResizing) {
+    if (!this.enableDraw || this.isDragging || this.isResizing) {
       return;
     }
     this.drawStart.emit(eventStart);
@@ -190,8 +195,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
         if (mouseY < startY) {
           newLego.y = mouseY;
         }
-        newLego.width = width;
-        newLego.height = height;
+        newLego.width = Math.max(this.minWidth, width);
+        newLego.height = Math.max(this.minHeight, height);
         this.snapToGuideLine(newLego, true);
         this.changeDrawGuidelines(newLego.x, newLego.y, newLego.width, newLego.height);
       });
@@ -326,12 +331,15 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   addNewLego(newLego): void {
     newLego.id = uuid();
     this.calcLineGuides(newLego);
-    this.allLegoConfig.push(newLego);
+    this.allLegoConfig.push({...newLego, ...this.drawItemData});
   }
 
   selectLego(eventStart: MouseEvent, item, lego: HTMLElement): void {
     this.selectedLego = [lego];
-    this.initDrag(eventStart, item);
+  }
+
+  clearSelectLego(): void {
+    //this.selectedLego = [];
   }
 
   resize(eventStart: MouseEvent, direction, item): void {

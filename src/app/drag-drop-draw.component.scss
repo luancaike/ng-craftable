@@ -4,10 +4,10 @@
   position: relative;
 
   .sidebar {
-    flex: 0 0 16.6666667%;
+    flex: 0 0 350px;
     height: calc(100vh - 50px);
     background: lightgrey;
-    max-width: 16.6666667%;
+    max-width: 350px;
   }
 
   .toolbar {
@@ -23,11 +23,16 @@
   user-select: none;
   box-sizing: border-box;
   padding-top: 30px;
-  flex: 0 0 83.3333333%;
-  max-width: 83.3333333%;
+  flex: 0 0 calc(100% - 350px);
+  max-width: calc(100% - 350px);
   overflow: auto;
   height: calc(100vh - 50px);
   text-align: center;
+
+
+  &.draw-mode {
+    cursor: crosshair;
+  }
 
   .align-wrapper {
     display: inline-block;
