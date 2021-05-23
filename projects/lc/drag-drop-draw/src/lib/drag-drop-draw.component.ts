@@ -45,7 +45,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   @Input() public minHeight = 50;
   @Input() public enableResize = true;
   @Input() public enableDrag = true;
-  @Input() public drawItemData: any = {teste: 'ABC'};
+  @Input() public drawItemData: { [k: string]: any };
   @Input() public enableDraw = false;
   @Input() public visualizationMode = false;
   @Input() public isDragging = false;
@@ -53,6 +53,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   @Input() public scale = 1;
 
   @Output() public drawStart = new EventEmitter();
+  @Output() public drawing = new EventEmitter();
   @Output() public drawEnd = new EventEmitter();
 
   public lineGuides = {
@@ -177,7 +178,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     if (!this.enableDraw || this.isDragging || this.isResizing) {
       return;
     }
-    this.drawStart.emit(eventStart);
+
     const {minBoundX, minBoundY} = this.getMaxAndMinBounds();
     const {dragEnd$, drag$} = this.getMouseEvents();
     let dragEndSub;
@@ -190,7 +191,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     const startY = (eventStart.pageY - minBoundY) / this.scale;
     newLego.x = startX;
     newLego.y = startY;
-    this.drawStart.emit(newLego);
+    this.drawStart.emit({event: eventStart, data: newLego});
     debounced = setTimeout(() => {
       this.stateDrawGuidelines();
       dragSub = drag$.subscribe(eventDrag => {
@@ -210,9 +211,10 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
         newLego.height = Math.round(Math.max(this.minHeight, height));
         this.snapToGuideLine(newLego, true);
         this.changeDrawGuidelines(newLego.x, newLego.y, newLego.width, newLego.height);
+        this.drawing.emit({event: eventDrag, data: newLego});
       });
     }, 100);
-    dragEndSub = dragEnd$.subscribe(() => {
+    dragEndSub = dragEnd$.subscribe((eventEnd) => {
       clearTimeout(debounced);
       this.hiddenAllHighlightLines();
       this.stateDrawGuidelines(false);
@@ -223,11 +225,12 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
         width = 0;
         height = 0;
       }
+      this.enableDraw = false;
       if (dragSub) {
         dragSub.unsubscribe();
       }
       dragEndSub.unsubscribe();
-
+      this.drawEnd.emit({event: eventEnd, data: newLego});
     });
   }
 
@@ -247,8 +250,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     const dragSub = drag$.subscribe(eventDrag => {
       const newX = ((eventDrag.pageX - minBoundX) / this.scale) - offsetX;
       const newY = ((eventDrag.pageY - minBoundY) / this.scale) - offsetY;
-      item.x =  Math.round(newX);
-      item.y =  Math.round(newY);
+      item.x = Math.round(newX);
+      item.y = Math.round(newY);
       this.snapToGuideLine(item);
       dragEndSub = dragEnd$.subscribe(() => {
         this.hiddenAllHighlightLines();
@@ -348,7 +351,9 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   }
 
   selectLego(eventStart: MouseEvent, item, lego: HTMLElement): void {
-    this.selectedLego = [lego];
+    if (!this.visualizationMode) {
+      this.selectedLego = [lego];
+    }
   }
 
   clearSelectLego(e: MouseEvent): void {
@@ -378,16 +383,16 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
 
       if (direction === 'right') {
         const mouseX = eventDrag.pageX / this.scale - minBoundX;
-        item.width =  Math.round(width + mouseX - initialX);
+        item.width = Math.round(width + mouseX - initialX);
       }
       if (direction === 'left') {
         const reduceX = ((eventDrag.pageX / this.scale)) - initialX - minBoundX;
         const reduceWidth = width - reduceX;
         if (reduceWidth >= this.minWidth) {
-          item.x =  Math.round(offsetX + reduceX);
+          item.x = Math.round(offsetX + reduceX);
         }
         if (item.x) {
-          item.width =  Math.round(width - reduceX);
+          item.width = Math.round(width - reduceX);
         }
       }
 
@@ -395,15 +400,15 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
         const reduceY = (eventDrag.pageY / this.scale) - initialY - minBoundY;
         const reduceHeight = height - reduceY;
         if (reduceHeight >= this.minHeight) {
-          item.y =  Math.round(offsetY + reduceY);
+          item.y = Math.round(offsetY + reduceY);
         }
         if (item.y) {
-          item.height =  Math.round(height - reduceY);
+          item.height = Math.round(height - reduceY);
         }
       }
       if (direction === 'bottom') {
         const reduceY = eventDrag.pageY / this.scale - initialY - minBoundY;
-        item.height =  Math.round(height + reduceY);
+        item.height = Math.round(height + reduceY);
       }
       this.snapToGuideLine(item, true);
       dragEndSub = dragEnd$.subscribe(() => {

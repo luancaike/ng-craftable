@@ -7,9 +7,10 @@ import {Component} from '@angular/core';
     <div class="ddd-area">
       <div class="toolbar">
         <button type="button" (click)="enableDraw = !enableDraw">Enable Draw Mode</button>
+        <button type="button" (click)="visualizationMode = !visualizationMode">Enable Visualization Mode</button>
       </div>
       <div class="workspace">
-        <drag-drop-draw  [enableDraw]="enableDraw" [visualizationMode]="true">
+        <drag-drop-draw [enableDraw]="enableDraw" [drawItemData]="{teste: 'ABC'}" [visualizationMode]="visualizationMode">
           <ng-template #template let-data>
             {{data | json}}
             <div *ngIf="data.teste === 'ABC'">
@@ -24,5 +25,6 @@ import {Component} from '@angular/core';
   `
 })
 export class AppComponent {
-  enableDraw= false
+  enableDraw = false;
+  visualizationMode = false;
 }
