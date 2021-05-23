@@ -6,6 +6,14 @@ Simple study project for use in private projects, which implements drawing, drag
   <img src="https://github.com/luancaike/drag-drop-draw/blob/master/docs/preview.gif" />
 </p>
 
+## Available Features in Project
+
+* :pen: Draw 
+* :triangular_ruler: Resizing
+* :raised_hand_with_fingers_splayed: Drag and Drop to Move
+* :straight_ruler: Rules Guide and Alignment
+* :tv: Scalable by Screen (Responsive)
+
 ## Run Project
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
