@@ -1,0 +1,24 @@
+.ddd-area {
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+
+  .sidebar {
+    flex: 0 0 350px;
+    height: calc(100vh - 50px);
+    background: lightgrey;
+    max-width: 350px;
+  }
+  .workspace {
+    flex: 0 0 calc(100% - 350px);
+    max-width: calc(100% - 350px);
+    height: calc(100vh - 50px);
+  }
+  .toolbar {
+    height: 50px;
+    background: white;
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+

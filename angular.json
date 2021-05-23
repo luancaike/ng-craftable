@@ -122,6 +122,46 @@
           }
         }
       }
+    },
+    "@lc/drag-drop-draw": {
+      "projectType": "library",
+      "root": "projects/lc/drag-drop-draw",
+      "sourceRoot": "projects/lc/drag-drop-draw/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "tsConfig": "projects/lc/drag-drop-draw/tsconfig.lib.json",
+            "project": "projects/lc/drag-drop-draw/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/lc/drag-drop-draw/tsconfig.lib.prod.json"
+            }
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/lc/drag-drop-draw/src/test.ts",
+            "tsConfig": "projects/lc/drag-drop-draw/tsconfig.spec.json",
+            "karmaConfig": "projects/lc/drag-drop-draw/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/lc/drag-drop-draw/tsconfig.lib.json",
+              "projects/lc/drag-drop-draw/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
     }
   },
   "defaultProject": "drag-drop-draw",

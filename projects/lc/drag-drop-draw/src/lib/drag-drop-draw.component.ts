@@ -9,8 +9,10 @@ import {
   Input,
   OnDestroy,
   Output,
+  QueryList,
   TemplateRef,
   ViewChild,
+  ViewChildren,
   ViewEncapsulation
 } from '@angular/core';
 import {fromEvent, Subscription} from 'rxjs';
@@ -25,8 +27,9 @@ import {v4 as uuid} from 'uuid';
 })
 export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   @ContentChild('template', {read: TemplateRef}) template: TemplateRef<any>;
+  @ViewChildren('lego') legoList!: QueryList<ElementRef<HTMLElement>>;
   @ViewChild('canvasContainer') canvasContainerRef: ElementRef<HTMLElement>;
-  @ViewChild('workspace') workspaceRef: ElementRef<HTMLElement>;
+  @ViewChild('mainArea') mainAreaRef: ElementRef<HTMLElement>;
   @ViewChild('guideContainer') guideContainerRef: ElementRef<HTMLElement>;
   @Input() public allLegoConfig = [
     {
@@ -74,8 +77,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     return this.canvasContainerRef.nativeElement;
   }
 
-  get workspace(): HTMLElement {
-    return this.workspaceRef.nativeElement;
+  get mainArea(): HTMLElement {
+    return this.mainAreaRef.nativeElement;
   }
 
   get drawPreview(): HTMLElement {
@@ -100,15 +103,20 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   }
 
   fixScaleByScreen(): void {
-    this.scale = this.workspace.offsetWidth < 1500 ? this.workspace.offsetWidth / 1500 : 1;
+    this.scale = this.mainArea.offsetWidth < 1500 ? this.mainArea.offsetWidth / 1500 : 1;
     this.canvasContainer.style.transform = `scale(${this.scale})`;
   }
 
   fixScaleSize(): void {
+    this.changeSizeElement('.guide-container');
+    this.changeSizeElement('.scale-wrapper');
+  }
+
+  changeSizeElement(selectors: string): void {
     const width = this.canvasContainer.offsetWidth;
     const height = this.canvasContainer.offsetHeight;
-    this.document.querySelector<HTMLDivElement>('.scale-wrapper').style.width = `${width * this.scale}px`;
-    this.document.querySelector<HTMLDivElement>('.scale-wrapper').style.height = `${height * this.scale}px`;
+    this.document.querySelector<HTMLDivElement>(selectors).style.width = `${width * this.scale}px`;
+    this.document.querySelector<HTMLDivElement>(selectors).style.height = `${height * this.scale}px`;
   }
 
   initFixedGuide(): void {
@@ -195,8 +203,10 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
         if (mouseY < startY) {
           newLego.y = mouseY;
         }
-        newLego.width = Math.max(this.minWidth, width);
-        newLego.height = Math.max(this.minHeight, height);
+        newLego.x = Math.round(newLego.x);
+        newLego.y = Math.round(newLego.y);
+        newLego.width = Math.round(Math.max(this.minWidth, width));
+        newLego.height = Math.round(Math.max(this.minHeight, height));
         this.snapToGuideLine(newLego, true);
         this.changeDrawGuidelines(newLego.x, newLego.y, newLego.width, newLego.height);
       });
@@ -236,8 +246,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     const dragSub = drag$.subscribe(eventDrag => {
       const newX = ((eventDrag.pageX - minBoundX) / this.scale) - offsetX;
       const newY = ((eventDrag.pageY - minBoundY) / this.scale) - offsetY;
-      item.x = newX;
-      item.y = newY;
+      item.x =  Math.round(newX);
+      item.y =  Math.round(newY);
       this.snapToGuideLine(item);
       dragEndSub = dragEnd$.subscribe(() => {
         this.hiddenAllHighlightLines();
@@ -259,13 +269,15 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     const className = 'line-guide-' + axis;
     const element = this.document.createElement('div');
     element.classList.add(className);
-    element.style[axis === 'x' ? 'left' : 'top'] = `${position}px`;
-    this.guideContainer.append(element);
+    element.style[axis === 'x' ? 'left' : 'top'] = `${position * this.scale}px`;
+    this.guideContainer.appendChild(element);
   }
 
   hiddenAllHighlightLines(): void {
-    const data = this.document.querySelectorAll('[class*="line-guide-"]');
-    data.forEach(el => el.remove());
+    const data = this.document.querySelectorAll<HTMLDivElement>('[class*="line-guide-"]');
+    data.forEach(el => {
+      el.remove();
+    });
   }
 
   setGuidelineSnap(axis, lego, isResize = false): any {
@@ -338,8 +350,11 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     this.selectedLego = [lego];
   }
 
-  clearSelectLego(): void {
-    //this.selectedLego = [];
+  clearSelectLego(e: MouseEvent): void {
+    const result = this.legoList.find(lego => lego.nativeElement === e.target || lego.nativeElement.contains(e.target as Node));
+    if (!result) {
+      this.selectedLego = [];
+    }
   }
 
   resize(eventStart: MouseEvent, direction, item): void {
@@ -362,16 +377,16 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
 
       if (direction === 'right') {
         const mouseX = eventDrag.pageX / this.scale - minBoundX;
-        item.width = width + mouseX - initialX;
+        item.width =  Math.round(width + mouseX - initialX);
       }
       if (direction === 'left') {
         const reduceX = ((eventDrag.pageX / this.scale)) - initialX - minBoundX;
         const reduceWidth = width - reduceX;
         if (reduceWidth >= this.minWidth) {
-          item.x = offsetX + reduceX;
+          item.x =  Math.round(offsetX + reduceX);
         }
         if (item.x) {
-          item.width = width - reduceX;
+          item.width =  Math.round(width - reduceX);
         }
       }
 
@@ -379,15 +394,15 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
         const reduceY = (eventDrag.pageY / this.scale) - initialY - minBoundY;
         const reduceHeight = height - reduceY;
         if (reduceHeight >= this.minHeight) {
-          item.y = offsetY + reduceY;
+          item.y =  Math.round(offsetY + reduceY);
         }
         if (item.y) {
-          item.height = height - reduceY;
+          item.height =  Math.round(height - reduceY);
         }
       }
       if (direction === 'bottom') {
         const reduceY = eventDrag.pageY / this.scale - initialY - minBoundY;
-        item.height = height + reduceY;
+        item.height =  Math.round(height + reduceY);
       }
       this.snapToGuideLine(item, true);
       dragEndSub = dragEnd$.subscribe(() => {
