@@ -16,4 +16,5 @@ Simple study project for use in private projects, which implements drawing, drag
 
 ## Run Project
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `ng build @lc/drag-drop-draw` for build lib and run `ng serve` for a example server. 
+Navigate to `http://localhost:4200/`.
