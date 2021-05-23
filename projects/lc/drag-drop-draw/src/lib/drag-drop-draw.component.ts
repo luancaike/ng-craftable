@@ -47,6 +47,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
   @Input() public enableDrag = true;
   @Input() public drawItemData: any = {teste: 'ABC'};
   @Input() public enableDraw = false;
+  @Input() public visualizationMode = false;
   @Input() public isDragging = false;
   @Input() public isResizing = false;
   @Input() public scale = 1;

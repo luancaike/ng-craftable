@@ -1,21 +1,26 @@
+$size-sidebar: 200px;
+$size-toolbar: 50px;
+
 .ddd-area {
   display: flex;
   flex-wrap: wrap;
   position: relative;
 
   .sidebar {
-    flex: 0 0 350px;
-    height: calc(100vh - 50px);
+    flex: 0 0 $size-sidebar;
+    height: calc(100vh - #{$size-toolbar});
     background: lightgrey;
-    max-width: 350px;
+    max-width: $size-sidebar;
   }
+
   .workspace {
-    flex: 0 0 calc(100% - 350px);
-    max-width: calc(100% - 350px);
-    height: calc(100vh - 50px);
+    flex: 0 0 calc(100% - #{$size-sidebar});
+    max-width: calc(100% - #{$size-sidebar});
+    height: calc(100vh - #{$size-toolbar});
   }
+
   .toolbar {
-    height: 50px;
+    height: $size-toolbar;
     background: white;
     flex: 0 0 100%;
     max-width: 100%;

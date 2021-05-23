@@ -9,9 +9,12 @@ import {Component} from '@angular/core';
         <button type="button" (click)="enableDraw = !enableDraw">Enable Draw Mode</button>
       </div>
       <div class="workspace">
-        <drag-drop-draw [enableDraw]="enableDraw">
+        <drag-drop-draw  [enableDraw]="enableDraw" [visualizationMode]="true">
           <ng-template #template let-data>
             {{data | json}}
+            <div *ngIf="data.teste === 'ABC'">
+              <button type="button">teste</button>
+            </div>
           </ng-template>
         </drag-drop-draw>
       </div>

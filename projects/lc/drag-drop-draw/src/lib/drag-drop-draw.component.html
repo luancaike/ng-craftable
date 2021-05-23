@@ -1,5 +1,6 @@
 <div class="main-area"
      [class.draw-mode]="enableDraw"
+     [class.visualization]="visualizationMode"
      (click)="clearSelectLego($event)"
      #mainArea (mousedown)="initDraw($event)">
   <div class="align-wrapper">
@@ -22,24 +23,29 @@
           [style.left.px]="item.x"
           [style.top.px]="item.y"
         >
-          <div class="resize-handler left" (mousedown)="resize($event,'left', item)"></div>
-          <div class="resize-handler top" (mousedown)="resize($event, 'top',item)"></div>
-          <div class="resize-handler right" (mousedown)="resize($event,'right', item)"></div>
-          <div class="resize-handler bottom" (mousedown)="resize($event, 'bottom', item)"></div>
-
-          <div class="resize-handler left-top"
-               (mousedown)="resize($event,'left', item) || resize($event, 'top',item)"></div>
-          <div class="resize-handler right-top"
-               (mousedown)="resize($event,'right', item) || resize($event, 'top',item)"></div>
-          <div class="resize-handler left-bottom"
-               (mousedown)="resize($event,'left', item) || resize($event, 'bottom', item)"></div>
-          <div class="resize-handler right-bottom"
-               (mousedown)="resize($event,'right', item) || resize($event, 'bottom', item)"></div>
-
-
-          <div class="lego-container"
+          <div class="drag-wrapper"
+               *ngIf="!visualizationMode"
                (click)="selectLego($event, item, lego)"
-               (mousedown)="initDrag($event, item)">
+               (mousedown)="selectedLego.includes(lego) && initDrag($event, item)"></div>
+          <div class="resize-wrapper"
+               *ngIf="!visualizationMode"
+               [hidden]="!selectedLego.includes(lego)">
+            <div class="resize-handler left" (mousedown)="resize($event,'left', item)"></div>
+            <div class="resize-handler top" (mousedown)="resize($event, 'top',item)"></div>
+            <div class="resize-handler right" (mousedown)="resize($event,'right', item)"></div>
+            <div class="resize-handler bottom" (mousedown)="resize($event, 'bottom', item)"></div>
+
+            <div class="resize-handler left-top"
+                 (mousedown)="resize($event,'left', item) || resize($event, 'top',item)"></div>
+            <div class="resize-handler right-top"
+                 (mousedown)="resize($event,'right', item) || resize($event, 'top',item)"></div>
+            <div class="resize-handler left-bottom"
+                 (mousedown)="resize($event,'left', item) || resize($event, 'bottom', item)"></div>
+            <div class="resize-handler right-bottom"
+                 (mousedown)="resize($event,'right', item) || resize($event, 'bottom', item)"></div>
+          </div>
+
+          <div class="lego-container">
             <ng-container *ngIf="template">
               <ng-template *ngTemplateOutlet="template; context: {$implicit: item}"></ng-template>
             </ng-container>
