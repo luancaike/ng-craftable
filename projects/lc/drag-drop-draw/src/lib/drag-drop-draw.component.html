@@ -1,26 +1,25 @@
 <div class="main-area"
      [class.draw-mode]="enableDraw"
      [class.visualization]="visualizationMode"
-     (click)="clearSelectLego($event)"
-     #mainArea (mousedown)="initDraw($event)">
+     #mainArea (mousedown)="mouseDownInMainArea($event)">
     <div class="align-wrapper">
         <div class="scale-wrapper">
             <div class="guide-container" #guideContainer>
             </div>
             <div class="canvas-container"
                  #canvasContainer>
-
                 <div class="draw-preview">
                 </div>
                 <div
                     #lego
                     *ngFor="let item of allLegoConfig;let i = index;trackBy: trackById"
                     [attr.data-key]="item.key"
-                    (click)="selectLego($event, item, lego)"
+                    (click)="selectLego($event, item)"
+                    style="display:none"
                     class="lego-item"
                 >
                     <div class="drag-wrapper"
-                         (mousedown)="initDrag($event, item, lego)"></div>
+                         (mousedown)="initDrag($event, item)"></div>
                     <div class="resize-wrapper">
                         <div class="resize-handler left" (mousedown)="resize($event,'left', item)"></div>
                         <div class="resize-handler top" (mousedown)="resize($event, 'top',item)"></div>
