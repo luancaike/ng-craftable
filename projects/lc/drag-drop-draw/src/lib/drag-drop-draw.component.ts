@@ -9,10 +9,12 @@ import {
     EventEmitter,
     Inject,
     Input,
+    OnChanges,
     OnDestroy,
     Output,
     QueryList,
     Renderer2,
+    SimpleChanges,
     TemplateRef,
     ViewChild,
     ViewChildren,
@@ -23,6 +25,15 @@ import { takeUntil } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
 import { runOutside } from './util';
 
+export interface LegoConfig<T = any> {
+    key?: string;
+    height?: number;
+    width?: number;
+    x?: number;
+    y?: number;
+    data?: T;
+}
+
 @Component({
     selector: 'drag-drop-draw',
     encapsulation: ViewEncapsulation.None,
@@ -30,21 +41,13 @@ import { runOutside } from './util';
     templateUrl: './drag-drop-draw.component.html',
     styleUrls: ['./drag-drop-draw.component.scss']
 })
-export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
+export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChanges {
     @ContentChild('template', { read: TemplateRef }) template: TemplateRef<any>;
     @ViewChildren('lego') legoList!: QueryList<ElementRef<HTMLElement>>;
     @ViewChild('canvasContainer') canvasContainerRef: ElementRef<HTMLElement>;
     @ViewChild('mainArea') mainAreaRef: ElementRef<HTMLElement>;
     @ViewChild('guideContainer') guideContainerRef: ElementRef<HTMLElement>;
-    @Input() public allLegoConfig = [
-        {
-            height: 51,
-            id: '9c3cbc87-6828-46da-9469-5f86093010f5',
-            width: 77,
-            x: 294,
-            y: 208
-        }
-    ];
+    @Input() public allLegoConfig: LegoConfig[] = [];
     @Input() public snapSize = 5;
     @Input() public minWidth = 50;
     @Input() public minHeight = 50;
@@ -57,6 +60,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     @Input() public isResizing = false;
     @Input() public scale = 1;
 
+    @Output() public selectionChange = new EventEmitter();
     @Output() public drawStart = new EventEmitter();
     @Output() public drawing = new EventEmitter();
     @Output() public drawEnd = new EventEmitter();
@@ -77,7 +81,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
             { parent: 'fixed', position: 900 }
         ]
     };
-    public selectedLego: HTMLElement[] = [];
+    public selectedLego: string[] = [];
     private resizeScreen$: Subscription;
     private resizeDebounce;
 
@@ -115,9 +119,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
             }, 100);
         });
 
-        this.allLegoConfig.forEach(lego => {
-            this.updateLegoViewData(lego);
-        });
+        this.allLegoConfig.forEach(lego => this.updateLegoViewData(lego));
     }
 
     fixScaleByScreen(): void {
@@ -145,7 +147,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     }
 
     trackById(index, item): any {
-        return item.id;
+        return item.key;
     }
 
     stateDrawGuidelines(show = true): void {
@@ -245,10 +247,11 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     }
 
     @runOutside
-    initDrag(eventStart: MouseEvent, item, lego?: HTMLElement): void {
-        if (!this.enableDrag || !this.selectedLego.includes(lego)) {
+    initDrag(eventStart: MouseEvent, item: LegoConfig, lego?: HTMLElement): void {
+        if (!this.enableDrag || !this.selectedLego.includes(item.key)) {
             return;
         }
+        console.log(item);
         this.isDragging = true;
         const { minBoundX, minBoundY } = this.getMaxAndMinBounds();
         const { dragEnd$, drag$ } = this.getMouseEvents();
@@ -267,6 +270,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
             this.updateLegoViewPositionAndSize(item);
             dragEndSub = dragEnd$.subscribe(() => {
                 this.hiddenAllHighlightLines();
+                this.updateLegoData(item);
                 this.updateLegoViewData(item);
                 dragSub.unsubscribe();
                 dragEndSub.unsubscribe();
@@ -331,17 +335,26 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
     }
 
     removeGuideLinesByLego(item): void {
-        this.lineGuides.x = this.lineGuides.x.filter(el => el.parent !== item.id);
-        this.lineGuides.y = this.lineGuides.y.filter(el => el.parent !== item.id);
+        this.lineGuides.x = this.lineGuides.x.filter(el => el.parent !== item.key);
+        this.lineGuides.y = this.lineGuides.y.filter(el => el.parent !== item.key);
     }
 
-    updateLegoViewData(item) {
+    updateLegoData(item) {
+        if (item.key) {
+            this.allLegoConfig = this.allLegoConfig.map(el => ({
+                ...el,
+                ...(el.key === item.key ? item : {})
+            }));
+        }
+    }
+
+    updateLegoViewData(item: LegoConfig) {
         this.updateLegoViewPositionAndSize(item);
         this.calculeLineGuidesOfLego(item);
     }
 
-    updateLegoViewPositionAndSize(item): void {
-        const lego = this.document.querySelector<HTMLDivElement>(`[data-key="${item.id}"]`);
+    updateLegoViewPositionAndSize(item: LegoConfig): void {
+        const lego = this.document.querySelector<HTMLDivElement>(`[data-key="${item.key}"]`);
         if (lego) {
             this.renderer.setStyle(lego, 'width', `${item.width}px`);
             this.renderer.setStyle(lego, 'height', `${item.height}px`);
@@ -352,42 +365,50 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    calculeLineGuidesOfLego(item): void {
+    calculeLineGuidesOfLego(item: LegoConfig): void {
         this.removeGuideLinesByLego(item);
         this.lineGuides.x = [
             ...this.lineGuides.x,
             ...[
-                { parent: item.id, position: item.x },
-                { parent: item.id, position: item.x + Math.round(item.width / 2) },
-                { parent: item.id, position: item.x + item.width }
+                { parent: item.key, position: item.x },
+                { parent: item.key, position: item.x + Math.round(item.width / 2) },
+                { parent: item.key, position: item.x + item.width }
             ]
         ];
         this.lineGuides.y = [
             ...this.lineGuides.y,
             ...[
-                { parent: item.id, position: item.y },
-                { parent: item.id, position: item.y + Math.round(item.height / 2) },
-                { parent: item.id, position: item.y + item.height }
+                { parent: item.key, position: item.y },
+                { parent: item.key, position: item.y + Math.round(item.height / 2) },
+                { parent: item.key, position: item.y + item.height }
             ]
         ];
     }
 
-    addNewLego(newLego): void {
-        newLego.id = uuid();
-        this.allLegoConfig.push({ ...newLego, ...this.drawItemData });
+    addNewLego(newLego: LegoConfig): void {
+        newLego.key = uuid();
+        this.allLegoConfig.push({ ...this.drawItemData, ...newLego });
         this.updateLegoViewData(newLego);
+        this.cdr.markForCheck();
+    }
+
+    removeLegoByKey(key): void {
+        this.allLegoConfig = this.allLegoConfig.filter(el => el.key !== key);
     }
 
     updateSelectedLego() {
         this.document.querySelectorAll('.lego-item.select').forEach(lego => this.renderer.removeClass(lego, 'select'));
-        this.selectedLego.forEach(lego => this.renderer.addClass(lego, 'select'));
+        this.selectedLego
+            .map(key => this.document.querySelector<HTMLDivElement>(`[data-key="${key}"]`))
+            .forEach(lego => this.renderer.addClass(lego, 'select'));
     }
 
-    selectLego(eventStart: MouseEvent, item, lego: HTMLElement): void {
+    selectLego(eventStart: MouseEvent, item: LegoConfig, lego: HTMLElement): void {
         if (!this.visualizationMode) {
-            this.selectedLego = [lego];
+            this.selectedLego = [item.key];
             this.updateSelectedLego();
         }
+        this.selectionChange.emit(item.key);
     }
 
     clearSelectLego(e: MouseEvent): void {
@@ -395,6 +416,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
             lego => lego.nativeElement === e.target || lego.nativeElement.contains(e.target as Node)
         );
         if (!result) {
+            this.selectionChange.emit(null);
             this.selectedLego = [];
             this.updateSelectedLego();
         }
@@ -459,6 +481,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
             this.snapToGuideLine(item, true);
             this.updateLegoViewPositionAndSize(item);
             dragEndSub = dragEnd$.subscribe(() => {
+                this.updateLegoData(item);
                 this.updateLegoViewData(item);
                 this.hiddenAllHighlightLines();
                 dragSub.unsubscribe();
@@ -470,5 +493,11 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.resizeScreen$.unsubscribe();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.allLegoConfig) {
+            this.allLegoConfig.forEach(lego => this.updateLegoViewData(lego));
+        }
     }
 }

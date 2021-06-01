@@ -13,20 +13,15 @@
                 <div class="draw-preview">
                 </div>
                 <div
-                    *ngFor="let item of allLegoConfig;trackBy: trackById"
-                    [id]="item.id"
                     #lego
-                    [attr.data-key]="item.id"
+                    *ngFor="let item of allLegoConfig;let i = index;trackBy: trackById"
+                    [attr.data-key]="item.key"
                     (click)="selectLego($event, item, lego)"
                     class="lego-item"
                 >
                     <div class="drag-wrapper"
-                         *ngIf="!visualizationMode"
-                         (click)="selectLego($event, item, lego)"
                          (mousedown)="initDrag($event, item, lego)"></div>
-                    <div class="resize-wrapper"
-                         *ngIf="!visualizationMode"
-                         [hidden]="!selectedLego.includes(lego)">
+                    <div class="resize-wrapper">
                         <div class="resize-handler left" (mousedown)="resize($event,'left', item)"></div>
                         <div class="resize-handler top" (mousedown)="resize($event, 'top',item)"></div>
                         <div class="resize-handler right" (mousedown)="resize($event,'right', item)"></div>
