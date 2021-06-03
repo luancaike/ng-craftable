@@ -2,19 +2,19 @@
     <div class="drag-wrapper"
          (mousedown)="initDrag($event, item, isSelection)"></div>
     <div class="resize-wrapper">
-        <div class="resize-handler left" (mousedown)="resize($event,'left', item, isSelection)"></div>
-        <div class="resize-handler top" (mousedown)="resize($event, 'top',item, isSelection)"></div>
-        <div class="resize-handler right" (mousedown)="resize($event,'right', item, isSelection)"></div>
-        <div class="resize-handler bottom" (mousedown)="resize($event, 'bottom', item, isSelection)"></div>
+        <div class="resize-handler left" (mousedown)="initResize($event,'left', item, isSelection)"></div>
+        <div class="resize-handler top" (mousedown)="initResize($event, 'top',item, isSelection)"></div>
+        <div class="resize-handler right" (mousedown)="initResize($event,'right', item, isSelection)"></div>
+        <div class="resize-handler bottom" (mousedown)="initResize($event, 'bottom', item, isSelection)"></div>
 
         <div class="resize-handler left-top"
-             (mousedown)="resize($event,'left top', item, isSelection)"></div>
+             (mousedown)="initResize($event,'left top', item, isSelection)"></div>
         <div class="resize-handler right-top"
-             (mousedown)="resize($event,'right top', item, isSelection)"></div>
+             (mousedown)="initResize($event,'right top', item, isSelection)"></div>
         <div class="resize-handler left-bottom"
-             (mousedown)="resize($event,'left bottom', item, isSelection)"></div>
+             (mousedown)="initResize($event,'left bottom', item, isSelection)"></div>
         <div class="resize-handler right-bottom"
-             (mousedown)="resize($event,'right bottom', item, isSelection)"></div>
+             (mousedown)="initResize($event,'right bottom', item, isSelection)"></div>
     </div>
 </ng-template>
 

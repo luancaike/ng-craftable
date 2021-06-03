@@ -24,15 +24,12 @@ import {fromEvent, Subscription} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
 import {v4 as uuid} from 'uuid';
 import {runOutside} from './util';
-
-export interface LegoConfig<T = any> {
-    key?: string;
-    height?: number;
-    width?: number;
-    x?: number;
-    y?: number;
-    data?: T;
-}
+import {Resizable} from './tools/resizable';
+import {Draggable} from './tools/draggable';
+import {Selectable} from './tools/selectable';
+import {Renderable} from './tools/renderable';
+import {Snappable} from './tools/snappable';
+import {LegoConfig, LinesGuide } from './model';
 
 @Component({
     selector: 'drag-drop-draw',
@@ -47,6 +44,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     @ViewChild('canvasContainer') canvasContainerRef: ElementRef<HTMLElement>;
     @ViewChild('mainArea') mainAreaRef: ElementRef<HTMLElement>;
     @ViewChild('guideContainer') guideContainerRef: ElementRef<HTMLElement>;
+
     @Input() public allLegoConfig: LegoConfig[] = [];
     @Input() public snapSize = 10;
     @Input() public gridSize = 10;
@@ -69,12 +67,12 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     public isDragging = false;
     public isDrawing = false;
     public isResizing = false;
-    public selectionArea: { [k: string]: any } = {};
-    public lineGuides = {
+
+    public lineGuides : LinesGuide = {
         x: [],
         y: []
     };
-    public fixedlineGuides = {
+    public fixedlineGuides: LinesGuide = {
         x: [
             {parent: 'fixed', position: 0},
             {parent: 'fixed', position: 600},
@@ -86,18 +84,27 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
             {parent: 'fixed', position: 900}
         ]
     };
-    public selectedLegoKeys: string[] = [];
     private resizeScreen$: Subscription;
     private keyDown$: Subscription;
     private keyUp$: Subscription;
     private shortcutKeysStatus = new Map();
     private resizeDebounce;
+    private resizable: Resizable;
+    private draggable: Draggable;
+    private selectable: Selectable;
+    private renderable: Renderable;
+    private snappable: Snappable;
 
     constructor(
         @Inject(DOCUMENT) private document: Document,
-        private renderer: Renderer2,
+        public renderer: Renderer2,
         private cdr: ChangeDetectorRef
     ) {
+        this.resizable = new Resizable(this);
+        this.draggable = new Draggable(this);
+        this.selectable = new Selectable(this);
+        this.renderable = new Renderable(this);
+        this.snappable = new Snappable(this);
     }
 
     get guideContainer(): HTMLElement {
@@ -147,7 +154,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
 
     keyBoardMoveLego(keyboardKey: string) {
         const selectionLegoConfigs = this.allLegoConfig
-            .filter(lego => this.selectedLegoKeys.find(key => lego.key === key));
+            .filter(lego => this.selectable.selectedLegoKeys.find(key => lego.key === key));
         selectionLegoConfigs.forEach(lego => {
             switch (keyboardKey) {
                 case 'ArrowUp':
@@ -165,7 +172,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
             }
             this.updateLegoViewPositionAndSize(lego);
         });
-        this.resizeSelectionAreaBySelectedLego(selectionLegoConfigs);
+        this.selectable.resizeSelectionAreaBySelectedLego(selectionLegoConfigs);
     }
 
     fixScaleByScreen(): void {
@@ -260,219 +267,64 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         }
     }
 
-    @runOutside
     initDraw(eventStart: MouseEvent): void {
-        this.isDrawing = true;
-        const {minBoundX, minBoundY} = this.getMaxAndMinBounds();
-        const {dragEnd$, drag$} = this.getMouseEvents();
-        let dragSub;
-        let width = 0;
-        let height = 0;
-        const newLego: any = {};
-        const startX = this.fixByGridSize((eventStart.pageX - minBoundX) / this.scale);
-        const startY = this.fixByGridSize((eventStart.pageY - minBoundY) / this.scale);
-        newLego.x = startX;
-        newLego.y = startY;
-        this.drawStart.emit({event: eventStart, data: newLego});
-        let dragEndSub: Subscription;
-        this.stateDrawGuidelines();
-        dragSub = drag$.subscribe(eventDrag => {
-            const mouseX = this.fixByGridSize((eventDrag.pageX - minBoundX) / this.scale);
-            const mouseY = this.fixByGridSize((eventDrag.pageY - minBoundY) / this.scale);
-            width = Math.abs(mouseX - startX);
-            height = Math.abs(mouseY - startY);
-            if (mouseX < startX) {
-                newLego.x = mouseX;
-            }
-            if (mouseY < startY) {
-                newLego.y = mouseY;
-            }
-            newLego.x = Math.round(newLego.x);
-            newLego.y = Math.round(newLego.y);
-            newLego.width = Math.round(width);
-            newLego.height = Math.round(height);
-            this.snapToGuideLine(newLego, true);
-            this.changeDrawGuidelines(this.drawPreview, newLego.x, newLego.y, newLego.width, newLego.height);
-            this.drawing.emit({event: eventDrag, data: newLego});
-        });
-        dragEndSub = dragEnd$.subscribe(eventEnd => {
-            this.hiddenAllHighlightLines();
-            this.stateDrawGuidelines(false);
-            newLego.width = Math.round(Math.max(this.minWidth, width));
-            newLego.height = Math.round(Math.max(this.minHeight, height));
-            if (width && height) {
-                this.addNewLego(newLego);
-                width = 0;
-                height = 0;
-            }
-            this.enableDraw = false;
-            if (dragSub) {
-                dragSub.unsubscribe();
-            }
-            dragEndSub.unsubscribe();
-            this.drawEnd.emit({event: eventEnd, data: newLego});
-            this.isDrawing = true;
-        });
+        this.renderable.draw(eventStart);
     }
 
-    @runOutside
     initSelection(eventStart: MouseEvent): void {
-        const {minBoundX, minBoundY} = this.getMaxAndMinBounds();
-        const {dragEnd$, drag$} = this.getMouseEvents();
-        let dragSub;
-        let width = 0;
-        let height = 0;
-        const selectionArea: any = {};
-        const startX = (eventStart.pageX - minBoundX) / this.scale;
-        const startY = (eventStart.pageY - minBoundY) / this.scale;
-        selectionArea.x = startX;
-        selectionArea.y = startY;
-        this.isSelecting = true;
-        this.stateSelectionGuidelines();
-        dragSub = drag$.subscribe(eventDrag => {
-            const mouseX = (eventDrag.pageX - minBoundX) / this.scale;
-            const mouseY = (eventDrag.pageY - minBoundY) / this.scale;
-            width = Math.abs(mouseX - startX);
-            height = Math.abs(mouseY - startY);
-            if (mouseX < startX) {
-                selectionArea.x = mouseX;
-            }
-            if (mouseY < startY) {
-                selectionArea.y = mouseY;
-            }
-            selectionArea.x = Math.round(selectionArea.x);
-            selectionArea.y = Math.round(selectionArea.y);
-            selectionArea.width = Math.round(width);
-            selectionArea.height = Math.round(height);
-            this.changeDrawGuidelines(this.selectionPreview, selectionArea.x, selectionArea.y, selectionArea.width, selectionArea.height);
-        });
-        const dragEndSub = dragEnd$.subscribe(() => {
-            this.selectionArea = selectionArea;
-            this.selectionLegoByArea();
-            // this.stateSelectionGuidelines(false);
-            if (dragSub) {
-                dragSub.unsubscribe();
-            }
-            dragEndSub.unsubscribe();
-            this.isSelecting = false;
-            this.cdr.detectChanges();
-        });
+        this.selectable.selectArea(eventStart);
     }
 
     validInitDrag(legoConfig: LegoConfig, isSelection: boolean): boolean {
         if (this.enableDrag) {
-            if (!isSelection && this.selectedLegoKeys.length <= 1) {
+            if (!isSelection && this.selectable.selectedLegoKeys.length <= 1) {
                 this.selectLego(legoConfig);
             }
-            return this.selectedLegoKeys.includes(legoConfig.key) || isSelection;
+            return this.selectable.selectedLegoKeys.includes(legoConfig.key) || isSelection;
         }
         return false;
 
     }
 
-    @runOutside
     initDrag(eventStart: MouseEvent, legoConfig: LegoConfig, isSelection = false): void {
         if (!this.validInitDrag(legoConfig, isSelection)) {
             return;
         }
-        const dragHandler = (item, selectionGroup: LegoConfig[] = []) => {
-            this.isDragging = true;
-            const {minBoundX, minBoundY} = this.getMaxAndMinBounds();
-            const {dragEnd$, drag$} = this.getMouseEvents();
-            const positionInitialX = Math.round(item.x);
-            const positionInitialY = Math.round(item.y);
-            const initialX = (eventStart.pageX - minBoundX) / this.scale;
-            const initialY = (eventStart.pageY - minBoundY) / this.scale;
-            const offsetX = initialX - item.x;
-            const offsetY = initialY - item.y;
-            let dragEndSub: Subscription;
-            let newLegoGroupPosition = [];
-            this.removeGuideLinesByLego(item);
-            const dragSub = drag$.subscribe(eventDrag => {
-                const newX = (eventDrag.pageX - minBoundX) / this.scale - offsetX;
-                const newY = (eventDrag.pageY - minBoundY) / this.scale - offsetY;
-                item.x = this.fixByGridSize(newX);
-                item.y = this.fixByGridSize(newY);
-                this.snapToGuideLine(item, false, selectionGroup.map(({key}) => key));
-                this.updateLegoViewPositionAndSize(item);
-                newLegoGroupPosition = selectionGroup.map((lego) => ({
-                    ...lego,
-                    x: Math.round(lego.x + (item.x - positionInitialX)),
-                    y: Math.round(lego.y + (item.y - positionInitialY)),
-                }));
-                newLegoGroupPosition.forEach((lego) => this.updateLegoViewPositionAndSize(lego));
-                this.changeDrawGuidelines(this.selectionPreview, item.x, item.y, item.width, item.height);
-            });
-            dragEndSub = dragEnd$.subscribe(() => {
-                this.hiddenAllHighlightLines();
-                newLegoGroupPosition.forEach(lego => {
-                    this.updateLegoData(lego);
-                    this.updateLegoViewData(lego);
-                });
-                this.updateLegoData(item);
-                this.updateLegoViewData(item);
-                dragSub.unsubscribe();
-                dragEndSub.unsubscribe();
-                this.isDragging = false;
-            });
-        };
-        const selectedLego = this.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
-        if (this.selectedLegoKeys.length > 1) {
-            dragHandler(this.selectionArea, selectedLego);
+
+        const selectedLego = this.selectable.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
+        if (this.selectable.selectedLegoKeys.length > 1) {
+            this.draggable.moveItem(eventStart, this.selectable.selectionArea, selectedLego);
         } else {
-            selectedLego.forEach(item => dragHandler(item));
+            selectedLego.forEach(item => this.draggable.moveItem(eventStart, item));
         }
     }
 
-    selectionLegoByArea() {
-        const minX = this.selectionArea.x;
-        const minY = this.selectionArea.y;
-        const maxX = this.selectionArea.x + this.selectionArea.width;
-        const maxY = this.selectionArea.y + this.selectionArea.height;
-        const selection = this.allLegoConfig
-            .filter(lego => (lego.x >= minX) && ((lego.x + lego.width) <= maxX)
-                && (lego.y >= minY) && ((lego.y + lego.height) <= maxY));
-        this.resizeSelectionAreaBySelectedLego(selection);
-        this.selectedLegoKeys = selection.map(({key}) => key);
-        this.applySelectedLegoInView(selection.length !== 1);
-    }
 
-    resizeSelectionAreaBySelectedLego(selection: LegoConfig[]) {
-        const x = Math.min.apply(Math, selection.map(el => el.x)) - 1;
-        const y = Math.min.apply(Math, selection.map(el => el.y)) - 1;
-        const width = Math.max.apply(Math, selection.map(el => el.x + el.width)) - x + 1;
-        const height = Math.max.apply(Math, selection.map(el => el.y + +el.height)) - y + 1;
-        this.selectionArea = {
-            x,
-            y,
-            width,
-            height
-        };
-        if (selection.length > 1) {
-            this.renderer.addClass(this.selectionPreview, 'select');
-            this.changeDrawGuidelines(this.selectionPreview, this.selectionArea.x, this.selectionArea.y, this.selectionArea.width, this.selectionArea.height);
-        } else {
-            this.stateSelectionGuidelines(false);
-        }
 
-    }
-
-    snapToGuideLine(item, isResize = false, ignoreAxisKey = []): void {
+    snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey : string[]= []): void {
         this.hiddenAllHighlightLines();
-        this.checkLegoInSnap('x', item, isResize, (axis, position) => this.showHighlightLines(axis, position), ignoreAxisKey);
-        this.checkLegoInSnap('y', item, isResize, (axis, position) => this.showHighlightLines(axis, position), ignoreAxisKey);
+        const params = {
+            lineGuides: this.lineGuides,
+            snapSize: this.snapSize,
+            callBackOnThrust: (axis, position) => this.showHighlightLines(axis, position),
+            lego,
+            ignoreAxisKey,
+            isResize
+        };
+        this.snappable.checkLegoInSnap({...params, axis: 'x'});
+        this.snappable.checkLegoInSnap({...params, axis: 'y'});
     }
 
-    showHighlightLines(axis, position): void {
+    showHighlightLines(axis: 'x' | 'y', position: number): void {
         const className = 'line-guide-' + axis;
-        const positionScale = position * this.scale
-        const lineGuideId = `line-guide-${axis}-${positionScale}`
+        const positionScale = position * this.scale;
+        const lineGuideId = `line-guide-${axis}-${positionScale}`;
         const existsGuideThisValue = this.document.querySelector(`[id="${lineGuideId}"]`);
-        if(!!existsGuideThisValue){
-            return
+        if (!!existsGuideThisValue) {
+            return;
         }
         const element = this.document.createElement('div');
-        element.id = lineGuideId
+        element.id = lineGuideId;
         element.classList.add(className);
         element.style[axis === 'x' ? 'left' : 'top'] = `${positionScale}px`;
         this.guideContainer.appendChild(element);
@@ -483,44 +335,6 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         data.forEach(el => {
             el.remove();
         });
-    }
-
-    checkLegoInSnap(axis, lego, isResize = false, callBackOnThrust: (...args) => any, ignoreAxisKey = []) {
-        const side = axis === 'x' ? 'width' : 'height';
-        const size = lego[side];
-        const distance = lego[axis];
-        const halfSideLength = Math.abs(size / 2);
-        const endDistance = distance + size;
-        const center = distance + halfSideLength;
-        for (const item of this.lineGuides[axis]) {
-            if (ignoreAxisKey.includes(item.parent)) {
-                break;
-            }
-            const position = item.position;
-            let showGuide = false;
-            if (Math.abs(position - distance) <= this.snapSize) {
-                if (isResize) {
-                    lego[side] -= (position - distance);
-                }
-                lego[axis] = position;
-                showGuide = true;
-            } else if (Math.abs(center - position) <= this.snapSize) {
-                if (!isResize) {
-                    lego[axis] = position - halfSideLength;
-                    showGuide = true;
-                }
-            } else if (Math.abs(endDistance - position) <= this.snapSize) {
-                if (isResize) {
-                    lego[side] = Math.abs(position - distance);
-                } else {
-                    lego[axis] = position - size;
-                }
-                showGuide = true;
-            }
-            if (showGuide) {
-                callBackOnThrust(axis, position);
-            }
-        }
     }
 
     removeGuideLinesByLego(item): void {
@@ -600,7 +414,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
 
     applySelectedLegoInView(inGroupLego = false) {
         this.document.querySelectorAll('.lego-item.select').forEach(lego => this.renderer.removeClass(lego, 'select'));
-        this.selectedLegoKeys
+        this.selectable.selectedLegoKeys
             .map(key => this.document.querySelector<HTMLDivElement>(`[data-key="${key}"]`))
             .forEach(lego =>
                 inGroupLego ? this.renderer.addClass(lego, 'in-group') :
@@ -613,7 +427,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         if (this.visualizationMode || this.isResizing || this.isDragging || this.isSelecting) {
             return;
         }
-        this.selectedLegoKeys = [item.key];
+        this.selectable.selectedLegoKeys = [item.key];
         this.applySelectedLegoInView();
         this.stateSelectionGuidelines(false);
         this.selectionChange.emit(item.key);
@@ -622,7 +436,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     clearSelectLego(): void {
         this.selectionChange.emit(null);
         this.unSelectAllLegoInView();
-        this.selectedLegoKeys = [];
+        this.selectable.selectedLegoKeys = [];
     }
 
     fixByGridSize(value: number) {
@@ -632,108 +446,15 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         return value;
     }
 
-    @runOutside
-    resize(eventStart: MouseEvent, direction: string, legoConfig: LegoConfig, isSelection = false): void {
+    initResize(eventStart: MouseEvent, direction: string, legoConfig: LegoConfig, isSelection = false): void {
         if (!this.enableResize) {
             return;
         }
-        const resizeHandler = (itemResizing, selectionGroup: LegoConfig[] = []) => {
-            this.isResizing = true;
-            const {minBoundX, minBoundY} = this.getMaxAndMinBounds();
-            let dragEndSub;
-
-            const initialX = eventStart.pageX / this.scale - minBoundX;
-            const initialY = eventStart.pageY / this.scale - minBoundY;
-            const offsetY = itemResizing.y;
-            const offsetX = itemResizing.x;
-            const height = itemResizing.height;
-            const width = itemResizing.width;
-            const {dragEnd$, drag$} = this.getMouseEvents();
-            this.removeGuideLinesByLego(itemResizing);
-
-            const legoGroupDiffScale = selectionGroup.map((lego) => ({
-                ...lego,
-                width: lego.width / itemResizing.width,
-                height: lego.height / itemResizing.height,
-                x: (lego.x - itemResizing.x) / itemResizing.width,
-                y: (lego.y - itemResizing.y) / itemResizing.height,
-            }));
-
-            const dragSub = drag$.subscribe(eventDrag => {
-                const resizeByNegativeAxis = axis => {
-                    const pageAxis = axis === 'x' ? eventDrag.pageX : eventDrag.pageY;
-                    const initial = axis === 'x' ? initialX : initialY;
-                    const minBound = axis === 'x' ? minBoundX : minBoundY;
-                    const minSize = axis === 'x' ? this.minWidth : this.minHeight;
-                    const offset = axis === 'x' ? offsetX : offsetY;
-                    const size = axis === 'x' ? width : height;
-                    let reduce = (pageAxis / this.scale - initial) - minBound;
-                    let newAxis = Math.round(offset + this.fixByGridSize(reduce));
-                    let newSize = Math.round(size - this.fixByGridSize(reduce));
-                    const reduceSize = size - reduce;
-                    if (reduceSize >= minSize) {
-                        itemResizing[axis] = this.fixByGridSize(newAxis);
-                    }
-                    if (itemResizing[axis]) {
-                        itemResizing[axis === 'x' ? 'width' : 'height'] = this.fixByGridSize(newSize);
-                    }
-                };
-                const resizeByPositiveAxis = axis => {
-                    const pageAxis = axis === 'x' ? eventDrag.pageX : eventDrag.pageY;
-                    const initial = axis === 'x' ? initialX : initialY;
-                    const minBound = axis === 'x' ? minBoundX : minBoundY;
-                    const size = axis === 'x' ? width : height;
-                    const reduce = pageAxis / this.scale - minBound;
-                    itemResizing[axis === 'x' ? 'width' : 'height'] = this.fixByGridSize(size + reduce - initial);
-                };
-                if (direction.indexOf('right') >= 0) {
-                    resizeByPositiveAxis('x');
-                }
-                if (direction.indexOf('left') >= 0) {
-                    resizeByNegativeAxis('x');
-                }
-
-                if (direction.indexOf('top') >= 0) {
-                    resizeByNegativeAxis('y');
-                }
-                if (direction.indexOf('bottom') >= 0) {
-                    resizeByPositiveAxis('y');
-                }
-                itemResizing.width = Math.round(Math.max(this.minWidth, itemResizing.width));
-                itemResizing.height = Math.round(Math.max(this.minHeight, itemResizing.height));
-                this.snapToGuideLine(itemResizing, true, selectionGroup.map(({key}) => key));
-                this.updateLegoViewPositionAndSize(itemResizing);
-                this.changeDrawGuidelines(this.selectionPreview, itemResizing.x, itemResizing.y, itemResizing.width, itemResizing.height);
-                const newLegoGroupPosition = legoGroupDiffScale.map((oldLego) => ({
-                    ...oldLego,
-                    x: (itemResizing.width * oldLego.x) + itemResizing.x,
-                    y: (itemResizing.height * oldLego.y) + itemResizing.y,
-                    width: itemResizing.width * oldLego.width,
-                    height: itemResizing.height * oldLego.height
-                }));
-                newLegoGroupPosition.forEach((lego) => this.updateLegoViewPositionAndSize(lego));
-                if (dragEndSub) {
-                    dragEndSub.unsubscribe();
-                }
-                dragEndSub = dragEnd$.subscribe(() => {
-                    newLegoGroupPosition.forEach(lego => {
-                        this.updateLegoData(lego);
-                        this.updateLegoViewData(lego);
-                    });
-                    this.updateLegoData(itemResizing);
-                    this.updateLegoViewData(itemResizing);
-                    this.hiddenAllHighlightLines();
-                    dragSub.unsubscribe();
-                    dragEndSub.unsubscribe();
-                    this.isResizing = false;
-                });
-            });
-        };
-        const selectedLego = this.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
+        const selectedLego = this.selectable.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
         if (isSelection) {
-            resizeHandler(this.selectionArea, selectedLego);
+            this.resizable.resizeItemGroup(eventStart, direction, this.selectable.selectionArea, selectedLego);
         } else {
-            resizeHandler(legoConfig)
+            this.resizable.resizeItem(eventStart, direction, legoConfig);
         }
     }
 
