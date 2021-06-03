@@ -1,4 +1,8 @@
 .main-area {
+    * {
+        box-sizing: border-box;
+    }
+
     box-sizing: border-box;
     padding-top: 30px;
     overflow: auto;
@@ -134,13 +138,16 @@
                 }
 
                 .resize-handler {
+                    box-sizing: border-box;
                     position: absolute;
+                    border: white 1px solid;
+                    background: deepskyblue;
+                    border-radius: 5px;
 
                     &.top, &.bottom {
                         width: 10px;
                         height: 10px;
                         left: calc(100% / 2 - 5px);
-                        background: deepskyblue;
                         cursor: n-resize;
                     }
 
@@ -157,7 +164,6 @@
                         width: 10px;
                         height: 10px;
                         top: calc(100% / 2 - 5px);
-                        background: deepskyblue;
                     }
 
                     &.left {
@@ -171,7 +177,6 @@
                     &.left-top, &.right-top, &.left-bottom, &.right-bottom {
                         height: 10px;
                         width: 10px;
-                        background: deepskyblue;
                     }
 
                     &.left-top {
