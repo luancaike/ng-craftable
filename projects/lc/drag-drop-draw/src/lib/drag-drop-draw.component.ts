@@ -29,7 +29,9 @@ import {Draggable} from './tools/draggable';
 import {Selectable} from './tools/selectable';
 import {Renderable} from './tools/renderable';
 import {Snappable} from './tools/snappable';
-import {LegoConfig, LinesGuide } from './model';
+import {LegoConfig, LinesGuide} from './model';
+import {TimelineService} from './timeline.service';
+import {ShortcutService} from './shortcut.service';
 
 @Component({
     selector: 'drag-drop-draw',
@@ -68,7 +70,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     public isDrawing = false;
     public isResizing = false;
 
-    public lineGuides : LinesGuide = {
+    public lineGuides: LinesGuide = {
         x: [],
         y: []
     };
@@ -87,7 +89,6 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     private resizeScreen$: Subscription;
     private keyDown$: Subscription;
     private keyUp$: Subscription;
-    private shortcutKeysStatus = new Map();
     private resizeDebounce;
     private resizable: Resizable;
     private draggable: Draggable;
@@ -98,6 +99,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     constructor(
         @Inject(DOCUMENT) private document: Document,
         public renderer: Renderer2,
+        public timelineService: TimelineService,
+        public shortcutService: ShortcutService,
         private cdr: ChangeDetectorRef
     ) {
         this.resizable = new Resizable(this);
@@ -138,18 +141,39 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
                 this.fixScaleSize();
             }, 100);
         });
-        this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown').subscribe(event => this.onKeyDown(event));
-        this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup').subscribe(event => this.onKeyUp(event));
+        this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown').subscribe(event => {
+            this.shortcutService.onKeyDown(event);
+        });
+        this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup').subscribe(event => {
+            this.shortcutService.onKeyUp(event);
+        });
+        this.registerShortcuts();
         this.allLegoConfig.forEach(lego => this.updateLegoViewData(lego));
     }
 
-    onKeyDown(event: KeyboardEvent) {
-        this.shortcutKeysStatus.set(event.key, true);
-        this.keyBoardMoveLego(event.key);
+    registerShortcuts() {
+        this.shortcutService.registerShortcut(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
+            (key) => this.keyBoardMoveLego(key));
+        this.shortcutService.registerShortcut('Control+Z',
+            () => this.undoStateInTimeline());
+        this.shortcutService.registerShortcut('Control+Shift+Z',
+            () =>  this.redoStateInTimeline());
     }
 
-    onKeyUp(event: KeyboardEvent) {
-        this.shortcutKeysStatus.set(event.key, false);
+    saveStateInTimeline() {
+        this.timelineService.addPoint(this.allLegoConfig);
+    }
+
+    undoStateInTimeline() {
+        this.allLegoConfig = this.timelineService.undoPoint();
+        this.allLegoConfig.forEach(el => this.updateLegoViewData(el));
+        this.cdr.detectChanges();
+    }
+
+    redoStateInTimeline() {
+        this.allLegoConfig = this.timelineService.redoPoint();
+        this.allLegoConfig.forEach(el => this.updateLegoViewData(el));
+        this.cdr.detectChanges();
     }
 
     keyBoardMoveLego(keyboardKey: string) {
@@ -300,8 +324,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     }
 
 
-
-    snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey : string[]= []): void {
+    snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey: string[] = []): void {
         this.hiddenAllHighlightLines();
         const params = {
             lineGuides: this.lineGuides,
@@ -348,7 +371,8 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
                 ...el,
                 ...(el.key === item.key ? item : {})
             }));
-            this.cdr.detectChanges()
+            this.cdr.detectChanges();
+            this.saveStateInTimeline();
         }
     }
 
@@ -391,7 +415,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
                 {parent: item.key, position: item.y + item.height}
             ]
         ];
-        this.cdr.detectChanges()
+        this.cdr.detectChanges();
     }
 
     addNewLego(newLego: LegoConfig): void {
