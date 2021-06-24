@@ -348,6 +348,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
                 ...el,
                 ...(el.key === item.key ? item : {})
             }));
+            this.cdr.detectChanges()
         }
     }
 
@@ -390,6 +391,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
                 {parent: item.key, position: item.y + item.height}
             ]
         ];
+        this.cdr.detectChanges()
     }
 
     addNewLego(newLego: LegoConfig): void {
