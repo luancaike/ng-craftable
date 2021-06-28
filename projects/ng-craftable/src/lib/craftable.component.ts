@@ -23,7 +23,7 @@ import {
 import {fromEvent, Subscription} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
 import {v4 as uuid} from 'uuid';
-import {runOutside} from './util';
+import {debounce, runOutside} from './util';
 import {Resizable} from './tools/resizable';
 import {Draggable} from './tools/draggable';
 import {Selectable} from './tools/selectable';
@@ -139,7 +139,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.allLegoConfig.forEach(el => this.updateLegoViewData(el));
         this.resetGuideLines();
         this.selectable.resizeSelectionAreaBySelectedLego(this.selectable.getSelectedLegos());
-        this.cdr.detectChanges();
+        this.detectChanges();
     }
 
     redo() {
@@ -147,7 +147,13 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.allLegoConfig.forEach(el => this.updateLegoViewData(el));
         this.resetGuideLines();
         this.selectable.resizeSelectionAreaBySelectedLego(this.selectable.getSelectedLegos());
-        this.cdr.detectChanges();
+        this.detectChanges();
+    }
+
+    drawNewLego(data = {}) {
+        this.enableDraw = true;
+        this.drawItemData = data;
+        this.detectChanges();
     }
 
     moveLego(keyboardKey: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight') {
@@ -177,7 +183,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         newLego.key = uuid();
         this.allLegoConfig.push({...this.drawItemData, ...newLego});
         this.updateLegoViewData(newLego);
-        this.cdr.detectChanges();
+        this.detectChanges();
     }
 
     selectLego(item: LegoConfig): void {
@@ -202,7 +208,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.clearSelection();
         this.saveLocalHistory();
         this.toggleSelectionGuidelines(false, false);
-        this.cdr.detectChanges();
+        this.detectChanges();
     }
 
     clearSelection(): void {
@@ -377,7 +383,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
                 ...el,
                 ...(el.key === item.key ? item : {})
             }));
-            this.cdr.detectChanges();
+            this.detectChanges();
         }
     }
 
@@ -482,7 +488,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
                 {parent: item.key, position: item.y + item.height}
             ]
         ];
-        this.cdr.detectChanges();
+        this.detectChanges();
     }
 
     private unSelectAllLegoInView() {
@@ -492,6 +498,11 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
                 this.renderer.removeClass(lego, 'in-group');
             });
 
+    }
+
+    @debounce()
+    private detectChanges() {
+        this.cdr.detectChanges();
     }
 
     /**

@@ -13,6 +13,10 @@
     &:not(.visualization) {
         -webkit-user-select: none;
         user-select: none;
+
+        .lego-container {
+            pointer-events: none;
+        }
     }
 
     &.draw-mode {
@@ -26,7 +30,12 @@
 
         & .canvas-container {
             background: white !important;
+
+            .lego-container {
+                pointer-events: auto;
+            }
         }
+
     }
 
     .align-wrapper {
