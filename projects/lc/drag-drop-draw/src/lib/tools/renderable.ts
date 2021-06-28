@@ -22,7 +22,7 @@ export class Renderable {
         newLego.y = startY;
         this.drawComponent.drawStart.emit({event: eventStart, data: newLego});
         let dragEndSub: Subscription;
-        this.drawComponent.stateDrawGuidelines();
+        this.drawComponent.toggleDrawGuidelines();
         dragSub = drag$.subscribe(eventDrag => {
             const mouseX = this.drawComponent.fixByGridSize((eventDrag.pageX - minBoundX) / this.drawComponent.scale);
             const mouseY = this.drawComponent.fixByGridSize((eventDrag.pageY - minBoundY) / this.drawComponent.scale);
@@ -39,12 +39,12 @@ export class Renderable {
             newLego.width = Math.round(width);
             newLego.height = Math.round(height);
             this.drawComponent.snapToGuideLine(newLego, true);
-            this.drawComponent.changeDrawGuidelines(this.drawComponent.drawPreview, newLego.x, newLego.y, newLego.width, newLego.height);
+            this.drawComponent.setDrawGuidelines(this.drawComponent.drawPreview, newLego.x, newLego.y, newLego.width, newLego.height);
             this.drawComponent.drawing.emit({event: eventDrag, data: newLego});
         });
         dragEndSub = dragEnd$.subscribe(eventEnd => {
-            this.drawComponent.hiddenAllHighlightLines();
-            this.drawComponent.stateDrawGuidelines(false);
+            this.drawComponent.hiddenGuideLines();
+            this.drawComponent.toggleDrawGuidelines(false);
             newLego.width = Math.round(Math.max(this.drawComponent.minWidth, width));
             newLego.height = Math.round(Math.max(this.drawComponent.minHeight, height));
             if (width && height) {
@@ -57,6 +57,7 @@ export class Renderable {
                 dragSub.unsubscribe();
             }
             dragEndSub.unsubscribe();
+            this.drawComponent.saveLocalHistory();
             this.drawComponent.drawEnd.emit({event: eventEnd, data: newLego});
             this.drawComponent.isDrawing = true;
         });

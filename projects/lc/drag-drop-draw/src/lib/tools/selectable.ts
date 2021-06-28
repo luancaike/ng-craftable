@@ -22,7 +22,7 @@ export class Selectable {
         selectionArea.x = startX;
         selectionArea.y = startY;
         this.drawComponent.isSelecting = true;
-        this.drawComponent.stateSelectionGuidelines();
+        this.drawComponent.toggleSelectionGuidelines();
         dragSub = drag$.subscribe(eventDrag => {
             const mouseX = (eventDrag.pageX - minBoundX) / this.drawComponent.scale;
             const mouseY = (eventDrag.pageY - minBoundY) / this.drawComponent.scale;
@@ -38,7 +38,7 @@ export class Selectable {
             selectionArea.y = Math.round(selectionArea.y);
             selectionArea.width = Math.round(width);
             selectionArea.height = Math.round(height);
-            this.drawComponent.changeDrawGuidelines(this.drawComponent.selectionPreview, selectionArea.x, selectionArea.y, selectionArea.width, selectionArea.height);
+            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, selectionArea.x, selectionArea.y, selectionArea.width, selectionArea.height);
         });
         const dragEndSub = dragEnd$.subscribe(() => {
             this.selectionArea = selectionArea;
@@ -51,6 +51,16 @@ export class Selectable {
         });
     }
 
+    getSelectedLegos() {
+        return this.selectedLegoKeys.reduce((acc, key) => {
+            const result = this.drawComponent.allLegoConfig.find(el => el.key === key)
+            if(result){
+                acc.push(result)
+            }
+            return acc
+        }, []);
+    }
+
     selectionLegoByArea(): void {
         const minX = this.selectionArea.x;
         const minY = this.selectionArea.y;
@@ -61,10 +71,10 @@ export class Selectable {
                 && (lego.y >= minY) && ((lego.y + lego.height) <= maxY));
         this.resizeSelectionAreaBySelectedLego(selection);
         this.selectedLegoKeys = selection.map(({key}) => key);
-        this.drawComponent.applySelectedLegoInView(selection.length !== 1);
+        this.drawComponent.markSelectedLegos(selection.length !== 1);
     }
 
-    resizeSelectionAreaBySelectedLego(selection: LegoConfig[]) : void {
+    resizeSelectionAreaBySelectedLego(selection: LegoConfig[]): void {
         const x = Math.min.apply(Math, selection.map(el => el.x)) - 1;
         const y = Math.min.apply(Math, selection.map(el => el.y)) - 1;
         const width = Math.max.apply(Math, selection.map(el => el.x + el.width)) - x + 1;
@@ -77,9 +87,9 @@ export class Selectable {
         };
         if (selection.length > 1) {
             this.drawComponent.renderer.addClass(this.drawComponent.selectionPreview, 'select');
-            this.drawComponent.changeDrawGuidelines(this.drawComponent.selectionPreview, this.selectionArea.x, this.selectionArea.y, this.selectionArea.width, this.selectionArea.height);
+            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, this.selectionArea.x, this.selectionArea.y, this.selectionArea.width, this.selectionArea.height);
         } else {
-            this.drawComponent.stateSelectionGuidelines(false);
+            this.drawComponent.toggleSelectionGuidelines(false);
         }
 
     }

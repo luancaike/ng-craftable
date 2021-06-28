@@ -34,7 +34,7 @@ export class ShortcutService {
             }
             return splitKeys.every(key => this.shortcutKeysStatus.get(key));
         }
-        return true;
+        return false;
     }
 
     registerShortcut(key: string | string[], action: (...any) => any) {

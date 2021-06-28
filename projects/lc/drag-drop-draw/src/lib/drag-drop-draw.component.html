@@ -1,20 +1,20 @@
 <ng-template #resizeTemplate let-item let-isSelection='isSelection'>
     <div class="drag-wrapper"
-         (mousedown)="initDrag($event, item, isSelection)"></div>
+         (mousedown)="dragHandler($event, item, isSelection)"></div>
     <div class="resize-wrapper">
-        <div class="resize-handler left" (mousedown)="initResize($event,'left', item, isSelection)"></div>
-        <div class="resize-handler top" (mousedown)="initResize($event, 'top',item, isSelection)"></div>
-        <div class="resize-handler right" (mousedown)="initResize($event,'right', item, isSelection)"></div>
-        <div class="resize-handler bottom" (mousedown)="initResize($event, 'bottom', item, isSelection)"></div>
+        <div class="resize-handler left" (mousedown)="resizeHandler($event,'left', item, isSelection)"></div>
+        <div class="resize-handler top" (mousedown)="resizeHandler($event, 'top',item, isSelection)"></div>
+        <div class="resize-handler right" (mousedown)="resizeHandler($event,'right', item, isSelection)"></div>
+        <div class="resize-handler bottom" (mousedown)="resizeHandler($event, 'bottom', item, isSelection)"></div>
 
         <div class="resize-handler left-top"
-             (mousedown)="initResize($event,'left top', item, isSelection)"></div>
+             (mousedown)="resizeHandler($event,'left top', item, isSelection)"></div>
         <div class="resize-handler right-top"
-             (mousedown)="initResize($event,'right top', item, isSelection)"></div>
+             (mousedown)="resizeHandler($event,'right top', item, isSelection)"></div>
         <div class="resize-handler left-bottom"
-             (mousedown)="initResize($event,'left bottom', item, isSelection)"></div>
+             (mousedown)="resizeHandler($event,'left bottom', item, isSelection)"></div>
         <div class="resize-handler right-bottom"
-             (mousedown)="initResize($event,'right bottom', item, isSelection)"></div>
+             (mousedown)="resizeHandler($event,'right bottom', item, isSelection)"></div>
     </div>
 </ng-template>
 

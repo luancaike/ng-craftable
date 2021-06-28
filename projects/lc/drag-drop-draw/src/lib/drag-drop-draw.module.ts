@@ -3,13 +3,13 @@ import { DragDropDrawComponent } from './drag-drop-draw.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { setInjector } from './util';
-import {TimelineService} from './timeline.service';
+import {LocalHistoryService} from './local-history.service';
 import {ShortcutService} from './shortcut.service';
 
 @NgModule({
     imports: [FormsModule, CommonModule],
     declarations: [DragDropDrawComponent],
-    providers: [TimelineService, ShortcutService],
+    providers: [LocalHistoryService, ShortcutService],
     exports: [DragDropDrawComponent]
 })
 export class DragDropDrawModule {

@@ -30,7 +30,7 @@ import {Selectable} from './tools/selectable';
 import {Renderable} from './tools/renderable';
 import {Snappable} from './tools/snappable';
 import {LegoConfig, LinesGuide} from './model';
-import {TimelineService} from './timeline.service';
+import {LocalHistoryService} from './local-history.service';
 import {ShortcutService} from './shortcut.service';
 
 @Component({
@@ -42,10 +42,10 @@ import {ShortcutService} from './shortcut.service';
 })
 export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChanges {
     @ContentChild('template', {read: TemplateRef}) template: TemplateRef<any>;
-    @ViewChildren('lego') legoList!: QueryList<ElementRef<HTMLElement>>;
-    @ViewChild('canvasContainer') canvasContainerRef: ElementRef<HTMLElement>;
-    @ViewChild('mainArea') mainAreaRef: ElementRef<HTMLElement>;
-    @ViewChild('guideContainer') guideContainerRef: ElementRef<HTMLElement>;
+    @ViewChildren('lego') private legoList!: QueryList<ElementRef<HTMLElement>>;
+    @ViewChild('canvasContainer') private canvasContainerRef: ElementRef<HTMLElement>;
+    @ViewChild('mainArea') private mainAreaRef: ElementRef<HTMLElement>;
+    @ViewChild('guideContainer') private guideContainerRef: ElementRef<HTMLElement>;
 
     @Input() public allLegoConfig: LegoConfig[] = [];
     @Input() public snapSize = 10;
@@ -74,7 +74,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         x: [],
         y: []
     };
-    public fixedlineGuides: LinesGuide = {
+    public fixedLineGuides: LinesGuide = {
         x: [
             {parent: 'fixed', position: 0},
             {parent: 'fixed', position: 600},
@@ -86,6 +86,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
             {parent: 'fixed', position: 900}
         ]
     };
+
     private resizeScreen$: Subscription;
     private keyDown$: Subscription;
     private keyUp$: Subscription;
@@ -97,10 +98,10 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
     private snappable: Snappable;
 
     constructor(
-        @Inject(DOCUMENT) private document: Document,
         public renderer: Renderer2,
-        public timelineService: TimelineService,
+        public localHistoryService: LocalHistoryService,
         public shortcutService: ShortcutService,
+        @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
     ) {
         this.resizable = new Resizable(this);
@@ -130,53 +131,26 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         return this.document.querySelector<HTMLElement>('.selection-preview');
     }
 
-    ngAfterViewInit(): void {
-        this.initFixedGuide();
-        this.fixScaleByScreen();
-        this.fixScaleSize();
-        this.resizeScreen$ = fromEvent<MouseEvent>(window, 'resize').subscribe(() => {
-            clearTimeout(this.resizeDebounce);
-            this.resizeDebounce = setTimeout(() => {
-                this.fixScaleByScreen();
-                this.fixScaleSize();
-            }, 100);
-        });
-        this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown').subscribe(event => {
-            this.shortcutService.onKeyDown(event);
-        });
-        this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup').subscribe(event => {
-            this.shortcutService.onKeyUp(event);
-        });
-        this.registerShortcuts();
-        this.allLegoConfig.forEach(lego => this.updateLegoViewData(lego));
-    }
-
-    registerShortcuts() {
-        this.shortcutService.registerShortcut(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
-            (key) => this.keyBoardMoveLego(key));
-        this.shortcutService.registerShortcut('Control+Z',
-            () => this.undoStateInTimeline());
-        this.shortcutService.registerShortcut('Control+Shift+Z',
-            () =>  this.redoStateInTimeline());
-    }
-
-    saveStateInTimeline() {
-        this.timelineService.addPoint(this.allLegoConfig);
-    }
-
-    undoStateInTimeline() {
-        this.allLegoConfig = this.timelineService.undoPoint();
+    /**
+     *  Public Api
+     */
+    undo() {
+        this.allLegoConfig = this.localHistoryService.undoPoint();
         this.allLegoConfig.forEach(el => this.updateLegoViewData(el));
+        this.resetGuideLines();
+        this.selectable.resizeSelectionAreaBySelectedLego(this.selectable.getSelectedLegos());
         this.cdr.detectChanges();
     }
 
-    redoStateInTimeline() {
-        this.allLegoConfig = this.timelineService.redoPoint();
+    redo() {
+        this.allLegoConfig = this.localHistoryService.redoPoint();
         this.allLegoConfig.forEach(el => this.updateLegoViewData(el));
+        this.resetGuideLines();
+        this.selectable.resizeSelectionAreaBySelectedLego(this.selectable.getSelectedLegos());
         this.cdr.detectChanges();
     }
 
-    keyBoardMoveLego(keyboardKey: string) {
+    moveLego(keyboardKey: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight') {
         const selectionLegoConfigs = this.allLegoConfig
             .filter(lego => this.selectable.selectedLegoKeys.find(key => lego.key === key));
         selectionLegoConfigs.forEach(lego => {
@@ -199,62 +173,65 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         this.selectable.resizeSelectionAreaBySelectedLego(selectionLegoConfigs);
     }
 
-    fixScaleByScreen(): void {
+    addNewLego(newLego: LegoConfig): void {
+        newLego.key = uuid();
+        this.allLegoConfig.push({...this.drawItemData, ...newLego});
+        this.updateLegoViewData(newLego);
+        this.cdr.detectChanges();
+    }
+
+    selectLego(item: LegoConfig): void {
+        if (this.visualizationMode || this.isResizing || this.isDragging || this.isSelecting) {
+            return;
+        }
+        this.selectable.selectedLegoKeys = [item.key];
+        this.markSelectedLegos();
+        this.toggleSelectionGuidelines(false);
+        this.selectionChange.emit(item.key);
+    }
+
+    deleteLego(key): void {
+        this.allLegoConfig = this.allLegoConfig.filter(el => el.key !== key);
+    }
+
+    deleteSelection(): void {
+        this.selectable.selectedLegoKeys.forEach(key => {
+            this.deleteLego(key);
+            this.removeGuideLinesByLego({key});
+        });
+        this.clearSelection();
+        this.saveLocalHistory();
+        this.toggleSelectionGuidelines(false, false);
+        this.cdr.detectChanges();
+    }
+
+    clearSelection(): void {
+        this.selectionChange.emit(null);
+        this.unSelectAllLegoInView();
+        this.selectable.selectedLegoKeys = [];
+    }
+
+    saveLocalHistory() {
+        this.localHistoryService.addPoint(this.allLegoConfig);
+    }
+
+    setScaleByScreen(): void {
         this.scale = this.mainArea.offsetWidth < 1500 ? this.mainArea.offsetWidth / 1500 : 1;
         this.canvasContainer.style.transform = `scale(${this.scale})`;
+        this.fixScaleSize();
     }
 
-    fixScaleSize(): void {
-        this.changeSizeElement('.guide-container');
-        this.changeSizeElement('.scale-wrapper');
+    resetGuideLines(): void {
+        this.initFixedGuide();
+        this.allLegoConfig.forEach(lego => {
+            this.removeGuideLinesByLego(lego);
+            this.calculateLineGuidesOfLego(lego);
+        });
     }
 
-    changeSizeElement(selectors: string): void {
-        const width = this.canvasContainer.offsetWidth;
-        const height = this.canvasContainer.offsetHeight;
-        this.document.querySelector<HTMLDivElement>(selectors).style.width = `${width * this.scale}px`;
-        this.document.querySelector<HTMLDivElement>(selectors).style.height = `${height * this.scale}px`;
-    }
-
-    initFixedGuide(): void {
-        const width = this.canvasContainer.offsetWidth;
-        const height = this.canvasContainer.offsetHeight;
-        this.lineGuides.x = [0, width / 2, width].map(position => ({parent: 'fixed', position}));
-        this.lineGuides.y = [0, height / 2, height].map(position => ({parent: 'fixed', position}));
-    }
-
-    trackById(index, item): any {
-        return item.key;
-    }
-
-    stateDrawGuidelines(show = true): void {
+    toggleDrawGuidelines(show = true): void {
         this.drawPreview.style.display = show ? 'block' : 'none';
-        this.changeDrawGuidelines(this.drawPreview, null, null, 0, 0);
-    }
-
-    stateSelectionGuidelines(show = true, selected = false): void {
-        if (selected) {
-            this.renderer.addClass(this.selectionPreview, 'select');
-        } else {
-            this.renderer.removeClass(this.selectionPreview, 'select');
-        }
-        this.selectionPreview.style.display = show ? 'block' : 'none';
-        this.changeDrawGuidelines(this.selectionPreview, null, null, 0, 0);
-    }
-
-    changeDrawGuidelines(element: HTMLElement, x = null, y = null, width = null, height = null): void {
-        if (x !== null) {
-            this.renderer.setStyle(element, 'left', `${x}px`);
-        }
-        if (y !== null) {
-            this.renderer.setStyle(element, 'top', `${y}px`);
-        }
-        if (width !== null) {
-            this.renderer.setStyle(element, 'width', `${width}px`);
-        }
-        if (height !== null) {
-            this.renderer.setStyle(element, 'height', `${height}px`);
-        }
+        this.setDrawGuidelines(this.drawPreview, null, null, 0, 0);
     }
 
     getMaxAndMinBounds(): any {
@@ -271,15 +248,44 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         return {dragEnd$, drag$};
     }
 
+    trackById(index, item): any {
+        return item.key;
+    }
+
+    toggleSelectionGuidelines(show = true, selected = false): void {
+        if (selected) {
+            this.renderer.addClass(this.selectionPreview, 'select');
+        } else {
+            this.renderer.removeClass(this.selectionPreview, 'select');
+        }
+        this.selectionPreview.style.display = show ? 'block' : 'none';
+        this.setDrawGuidelines(this.selectionPreview, null, null, 0, 0);
+    }
+
+    setDrawGuidelines(element: HTMLElement, x = null, y = null, width = null, height = null): void {
+        if (x !== null) {
+            this.renderer.setStyle(element, 'left', `${x}px`);
+        }
+        if (y !== null) {
+            this.renderer.setStyle(element, 'top', `${y}px`);
+        }
+        if (width !== null) {
+            this.renderer.setStyle(element, 'width', `${width}px`);
+        }
+        if (height !== null) {
+            this.renderer.setStyle(element, 'height', `${height}px`);
+        }
+    }
+
     @runOutside
     mouseDownInMainArea($event: MouseEvent): void {
         if (this.visualizationMode || this.isDragging || this.isResizing) {
             return;
         }
         if (this.enableDraw) {
-            this.initDraw($event);
+            this.drawHandler($event);
         } else {
-            this.initSelection($event);
+            this.selectionHandler($event);
         }
         const selectionPreview = this.document.querySelector('.selection-preview');
         const isNotSelectionPreview = !(selectionPreview === $event.target || selectionPreview.contains($event.target as Node));
@@ -287,30 +293,11 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
             lego => lego.nativeElement === $event.target || lego.nativeElement.contains($event.target as Node)
         );
         if (isNotLegoOrLegoChild && isNotSelectionPreview) {
-            this.clearSelectLego();
+            this.clearSelection();
         }
     }
 
-    initDraw(eventStart: MouseEvent): void {
-        this.renderable.draw(eventStart);
-    }
-
-    initSelection(eventStart: MouseEvent): void {
-        this.selectable.selectArea(eventStart);
-    }
-
-    validInitDrag(legoConfig: LegoConfig, isSelection: boolean): boolean {
-        if (this.enableDrag) {
-            if (!isSelection && this.selectable.selectedLegoKeys.length <= 1) {
-                this.selectLego(legoConfig);
-            }
-            return this.selectable.selectedLegoKeys.includes(legoConfig.key) || isSelection;
-        }
-        return false;
-
-    }
-
-    initDrag(eventStart: MouseEvent, legoConfig: LegoConfig, isSelection = false): void {
+    dragHandler(eventStart: MouseEvent, legoConfig: LegoConfig, isSelection = false): void {
         if (!this.validInitDrag(legoConfig, isSelection)) {
             return;
         }
@@ -323,13 +310,32 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         }
     }
 
+    drawHandler(eventStart: MouseEvent): void {
+        this.renderable.draw(eventStart);
+    }
+
+    selectionHandler(eventStart: MouseEvent): void {
+        this.selectable.selectArea(eventStart);
+    }
+
+    resizeHandler(eventStart: MouseEvent, direction: string, legoConfig: LegoConfig, isSelection = false): void {
+        if (!this.enableResize) {
+            return;
+        }
+        const selectedLego = this.selectable.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
+        if (isSelection) {
+            this.resizable.resizeItemGroup(eventStart, direction, this.selectable.selectionArea, selectedLego);
+        } else {
+            this.resizable.resizeItem(eventStart, direction, legoConfig);
+        }
+    }
 
     snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey: string[] = []): void {
-        this.hiddenAllHighlightLines();
+        this.hiddenGuideLines();
         const params = {
             lineGuides: this.lineGuides,
             snapSize: this.snapSize,
-            callBackOnThrust: (axis, position) => this.showHighlightLines(axis, position),
+            callBackOnThrust: (axis, position) => this.showGuideLines(axis, position),
             lego,
             ignoreAxisKey,
             isResize
@@ -338,7 +344,14 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         this.snappable.checkLegoInSnap({...params, axis: 'y'});
     }
 
-    showHighlightLines(axis: 'x' | 'y', position: number): void {
+    hiddenGuideLines(): void {
+        const data = this.document.querySelectorAll<HTMLDivElement>('[class*="line-guide-"]');
+        data.forEach(el => {
+            el.remove();
+        });
+    }
+
+    showGuideLines(axis: 'x' | 'y', position: number): void {
         const className = 'line-guide-' + axis;
         const positionScale = position * this.scale;
         const lineGuideId = `line-guide-${axis}-${positionScale}`;
@@ -353,13 +366,6 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         this.guideContainer.appendChild(element);
     }
 
-    hiddenAllHighlightLines(): void {
-        const data = this.document.querySelectorAll<HTMLDivElement>('[class*="line-guide-"]');
-        data.forEach(el => {
-            el.remove();
-        });
-    }
-
     removeGuideLinesByLego(item): void {
         this.lineGuides.x = this.lineGuides.x.filter(el => el.parent !== item.key);
         this.lineGuides.y = this.lineGuides.y.filter(el => el.parent !== item.key);
@@ -372,7 +378,6 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
                 ...(el.key === item.key ? item : {})
             }));
             this.cdr.detectChanges();
-            this.saveStateInTimeline();
         }
     }
 
@@ -394,7 +399,69 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         }
     }
 
-    calculateLineGuidesOfLego(item: LegoConfig): void {
+    markSelectedLegos(inGroupLego = false) {
+        this.document.querySelectorAll('.lego-item.select').forEach(lego => this.renderer.removeClass(lego, 'select'));
+        this.selectable.selectedLegoKeys
+            .map(key => this.document.querySelector<HTMLDivElement>(`[data-key="${key}"]`))
+            .forEach(lego =>
+                inGroupLego ? this.renderer.addClass(lego, 'in-group') :
+                    this.renderer.addClass(lego, 'select')
+            );
+
+    }
+
+    fixByGridSize(value: number) {
+        if (this.enableStepGrid) {
+            return Math.round(value - value % this.gridSize);
+        }
+        return value;
+    }
+
+    /**
+     *  Private Methods
+     */
+    private registerShortcuts() {
+        this.shortcutService.registerShortcut(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
+            (key) => this.moveLego(key));
+        this.shortcutService.registerShortcut('Control+Z',
+            () => this.undo());
+        this.shortcutService.registerShortcut('Control+Shift+Z',
+            () => this.redo());
+        this.shortcutService.registerShortcut(['Backspace', 'Delete'],
+            () => this.deleteSelection());
+    }
+
+    private fixScaleSize(): void {
+        this.changeSizeElement('.guide-container');
+        this.changeSizeElement('.scale-wrapper');
+    }
+
+    private changeSizeElement(selectors: string): void {
+        const width = this.canvasContainer.offsetWidth;
+        const height = this.canvasContainer.offsetHeight;
+        this.document.querySelector<HTMLDivElement>(selectors).style.width = `${width * this.scale}px`;
+        this.document.querySelector<HTMLDivElement>(selectors).style.height = `${height * this.scale}px`;
+    }
+
+    private initFixedGuide(): void {
+        const width = this.canvasContainer.offsetWidth;
+        const height = this.canvasContainer.offsetHeight;
+        this.lineGuides.x = [0, width / 2, width].map(position => ({parent: 'fixed', position}));
+        this.lineGuides.y = [0, height / 2, height].map(position => ({parent: 'fixed', position}));
+    }
+
+    private validInitDrag(legoConfig: LegoConfig, isSelection: boolean): boolean {
+        if (this.enableDrag) {
+            if (!isSelection && this.selectable.selectedLegoKeys.length <= 1) {
+                this.selectLego(legoConfig);
+            }
+            return this.selectable.selectedLegoKeys.includes(legoConfig.key) || isSelection;
+        }
+        return false;
+
+    }
+
+    private calculateLineGuidesOfLego(item: LegoConfig): void {
         if (!item.key) {
             return;
         }
@@ -418,18 +485,7 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
         this.cdr.detectChanges();
     }
 
-    addNewLego(newLego: LegoConfig): void {
-        newLego.key = uuid();
-        this.allLegoConfig.push({...this.drawItemData, ...newLego});
-        this.updateLegoViewData(newLego);
-        this.cdr.detectChanges();
-    }
-
-    removeLegoByKey(key): void {
-        this.allLegoConfig = this.allLegoConfig.filter(el => el.key !== key);
-    }
-
-    unSelectAllLegoInView() {
+    private unSelectAllLegoInView() {
         this.document.querySelectorAll('.lego-item')
             .forEach(lego => {
                 this.renderer.removeClass(lego, 'select');
@@ -438,50 +494,26 @@ export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChange
 
     }
 
-    applySelectedLegoInView(inGroupLego = false) {
-        this.document.querySelectorAll('.lego-item.select').forEach(lego => this.renderer.removeClass(lego, 'select'));
-        this.selectable.selectedLegoKeys
-            .map(key => this.document.querySelector<HTMLDivElement>(`[data-key="${key}"]`))
-            .forEach(lego =>
-                inGroupLego ? this.renderer.addClass(lego, 'in-group') :
-                    this.renderer.addClass(lego, 'select')
-            );
-
-    }
-
-    selectLego(item: LegoConfig): void {
-        if (this.visualizationMode || this.isResizing || this.isDragging || this.isSelecting) {
-            return;
-        }
-        this.selectable.selectedLegoKeys = [item.key];
-        this.applySelectedLegoInView();
-        this.stateSelectionGuidelines(false);
-        this.selectionChange.emit(item.key);
-    }
-
-    clearSelectLego(): void {
-        this.selectionChange.emit(null);
-        this.unSelectAllLegoInView();
-        this.selectable.selectedLegoKeys = [];
-    }
-
-    fixByGridSize(value: number) {
-        if (this.enableStepGrid) {
-            return Math.round(value - value % this.gridSize);
-        }
-        return value;
-    }
-
-    initResize(eventStart: MouseEvent, direction: string, legoConfig: LegoConfig, isSelection = false): void {
-        if (!this.enableResize) {
-            return;
-        }
-        const selectedLego = this.selectable.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
-        if (isSelection) {
-            this.resizable.resizeItemGroup(eventStart, direction, this.selectable.selectionArea, selectedLego);
-        } else {
-            this.resizable.resizeItem(eventStart, direction, legoConfig);
-        }
+    /**
+     *  Angular Methods
+     */
+    ngAfterViewInit(): void {
+        this.initFixedGuide();
+        this.setScaleByScreen();
+        this.resizeScreen$ = fromEvent<MouseEvent>(window, 'resize').subscribe(() => {
+            clearTimeout(this.resizeDebounce);
+            this.resizeDebounce = setTimeout(() => {
+                this.setScaleByScreen();
+            }, 100);
+        });
+        this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown').subscribe(event => {
+            this.shortcutService.onKeyDown(event);
+        });
+        this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup').subscribe(event => {
+            this.shortcutService.onKeyUp(event);
+        });
+        this.registerShortcuts();
+        this.allLegoConfig.forEach(lego => this.updateLegoViewData(lego));
     }
 
     ngOnDestroy(): void {

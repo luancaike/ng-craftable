@@ -1,9 +1,10 @@
 import {Injectable} from '@angular/core';
 
 @Injectable()
-export class TimelineService {
+export class LocalHistoryService {
     timelinePoints = []
     indexStateNow = 0
+
     addPoint(dataPoint) {
         this.timelinePoints = this.timelinePoints.splice(this.indexStateNow, this.timelinePoints.length)
         this.indexStateNow = 0

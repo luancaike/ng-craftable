@@ -73,7 +73,7 @@ export class Resizable {
             itemResizing.height = Math.round(Math.max(this.drawComponent.minHeight, itemResizing.height));
             this.drawComponent.snapToGuideLine(itemResizing, true, selectionGroup.map(({key}) => key));
             this.drawComponent.updateLegoViewPositionAndSize(itemResizing);
-            this.drawComponent.changeDrawGuidelines(this.drawComponent.selectionPreview, itemResizing.x, itemResizing.y, itemResizing.width, itemResizing.height);
+            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, itemResizing.x, itemResizing.y, itemResizing.width, itemResizing.height);
             const newLegoGroupPosition = legoGroupDiffScale.map((oldLego) => ({
                 ...oldLego,
                 x: (itemResizing.width * oldLego.x) + itemResizing.x,
@@ -92,7 +92,8 @@ export class Resizable {
                 });
                 this.drawComponent.updateLegoData(itemResizing);
                 this.drawComponent.updateLegoViewData(itemResizing);
-                this.drawComponent.hiddenAllHighlightLines();
+                this.drawComponent.hiddenGuideLines();
+                this.drawComponent.saveLocalHistory();
                 dragSub.unsubscribe();
                 dragEndSub.unsubscribe();
                 this.drawComponent.isResizing = false;
