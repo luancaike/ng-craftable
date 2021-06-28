@@ -1,18 +1,18 @@
 import { Injector, NgModule } from '@angular/core';
-import { DragDropDrawComponent } from './drag-drop-draw.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { setInjector } from './util';
 import {LocalHistoryService} from './local-history.service';
 import {ShortcutService} from './shortcut.service';
+import { CraftableComponent } from './craftable.component';
 
 @NgModule({
     imports: [FormsModule, CommonModule],
-    declarations: [DragDropDrawComponent],
+    declarations: [CraftableComponent],
     providers: [LocalHistoryService, ShortcutService],
-    exports: [DragDropDrawComponent]
+    exports: [CraftableComponent]
 })
-export class DragDropDrawModule {
+export class CraftableModule {
     constructor(injector: Injector) {
         setInjector(injector);
     }

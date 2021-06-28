@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/ng-packagr/ng-package.schema.json",
-  "dest": "../../../dist/lc/drag-drop-draw",
+  "dest": "../../../dist/ng-craftable",
   "lib": {
     "entryFile": "src/public-api.ts"
   }

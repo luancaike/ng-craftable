@@ -1,4 +1,4 @@
-import {DragDropDrawComponent} from '../drag-drop-draw.component';
+import {CraftableComponent} from '../craftable.component';
 import {runOutside} from '../util';
 import {LegoConfig} from '../model';
 
@@ -6,7 +6,7 @@ export class Selectable {
     public selectionArea: LegoConfig;
     public selectedLegoKeys: string[];
 
-    constructor(private drawComponent: DragDropDrawComponent) {
+    constructor(private drawComponent: CraftableComponent) {
     }
 
     @runOutside

@@ -2,10 +2,10 @@ import {NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {FormsModule} from '@angular/forms';
 import {AppComponent} from './app.component';
-import {DragDropDrawModule} from '@lc/drag-drop-draw';
+import {CraftableModule} from 'ng-craftable';
 
 @NgModule({
-  imports: [BrowserModule, FormsModule, DragDropDrawModule],
+  imports: [BrowserModule, FormsModule, CraftableModule],
   declarations: [AppComponent],
   bootstrap: [AppComponent]
 })

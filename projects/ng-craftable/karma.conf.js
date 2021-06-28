@@ -25,7 +25,7 @@ module.exports = function (config) {
       suppressAll: true // removes the duplicated traces
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, '../../../coverage/lc/drag-drop-draw'),
+      dir: require('path').join(__dirname, '../../../coverage/ng-craftable'),
       subdir: '.',
       reporters: [
         { type: 'html' },

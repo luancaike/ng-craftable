@@ -1,4 +1,4 @@
-import {DragDropDrawComponent} from '../drag-drop-draw.component';
+import { CraftableComponent } from '../craftable.component';
 import {LegoConfig, LinesGuide } from '../model';
 
 type CheckLegoInSnapDto = {
@@ -13,7 +13,7 @@ type CheckLegoInSnapDto = {
 
 export class Snappable {
 
-    constructor(private drawComponent: DragDropDrawComponent) {
+    constructor(private drawComponent: CraftableComponent) {
     }
 
     checkLegoInSnap({lineGuides, snapSize, axis, lego, isResize, callBackOnThrust, ignoreAxisKey}: CheckLegoInSnapDto) {

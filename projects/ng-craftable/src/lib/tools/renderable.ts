@@ -1,10 +1,10 @@
-import {DragDropDrawComponent} from '../drag-drop-draw.component';
 import {runOutside} from '../util';
 import {Subscription} from 'rxjs';
+import { CraftableComponent } from '../craftable.component';
 
 export class Renderable {
 
-    constructor(private drawComponent: DragDropDrawComponent) {
+    constructor(private drawComponent: CraftableComponent) {
     }
 
     @runOutside

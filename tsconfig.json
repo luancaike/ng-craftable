@@ -19,9 +19,9 @@
       "dom"
     ],
     "paths": {
-      "@lc/drag-drop-draw": [
-        "dist/lc/drag-drop-draw/lc-drag-drop-draw",
-        "dist/lc/drag-drop-draw"
+      "ng-craftable": [
+        "dist/ng-craftable/ng-craftable",
+        "dist/ng-craftable"
       ]
     }
   }

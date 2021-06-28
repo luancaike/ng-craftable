@@ -1,10 +1,10 @@
 import {runOutside} from '../util';
-import {DragDropDrawComponent} from '../drag-drop-draw.component';
+import {CraftableComponent} from '../craftable.component';
 import { LegoConfig } from '../model';
 
 export class Resizable {
 
-    constructor(private drawComponent: DragDropDrawComponent) {
+    constructor(private drawComponent: CraftableComponent) {
     }
     @runOutside
     private resize(eventStart: MouseEvent, direction: string, itemResizing, selectionGroup: LegoConfig[] = []): void {

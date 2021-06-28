@@ -10,14 +10,14 @@ import {Component} from '@angular/core';
         <button type="button" (click)="visualizationMode = !visualizationMode">Enable Visualization Mode</button>
       </div>
       <div class="workspace">
-        <drag-drop-draw [enableDraw]="enableDraw" [drawItemData]="{teste: 'ABC'}" [visualizationMode]="visualizationMode">
+        <ng-craftable [enableDraw]="enableDraw" [drawItemData]="{teste: 'ABC'}" [visualizationMode]="visualizationMode">
           <ng-template #template let-data>
             {{data | json}}
             <div *ngIf="data.teste === 'ABC'">
               <button type="button">teste</button>
             </div>
           </ng-template>
-        </drag-drop-draw>
+        </ng-craftable>
       </div>
       <div class="sidebar"></div>
     </div>

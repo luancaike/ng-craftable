@@ -34,13 +34,13 @@ import {LocalHistoryService} from './local-history.service';
 import {ShortcutService} from './shortcut.service';
 
 @Component({
-    selector: 'drag-drop-draw',
+    selector: 'ng-craftable',
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    templateUrl: './drag-drop-draw.component.html',
-    styleUrls: ['./drag-drop-draw.component.scss']
+    templateUrl: './craftable.component.html',
+    styleUrls: ['./craftable.component.scss']
 })
-export class DragDropDrawComponent implements AfterViewInit, OnDestroy, OnChanges {
+export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     @ContentChild('template', {read: TemplateRef}) template: TemplateRef<any>;
     @ViewChildren('lego') private legoList!: QueryList<ElementRef<HTMLElement>>;
     @ViewChild('canvasContainer') private canvasContainerRef: ElementRef<HTMLElement>;

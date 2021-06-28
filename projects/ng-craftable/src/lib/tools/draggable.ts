@@ -1,11 +1,11 @@
-import {DragDropDrawComponent} from '../drag-drop-draw.component';
+import {CraftableComponent} from '../craftable.component';
 import {Subscription} from 'rxjs';
 import {runOutside} from '../util';
 import { LegoConfig } from '../model';
 
 export class Draggable {
 
-    constructor(private drawComponent: DragDropDrawComponent) {
+    constructor(private drawComponent: CraftableComponent) {
     }
     @runOutside
     moveItem(eventStart: MouseEvent, itemToMove, selectionGroup: LegoConfig[] = []) {
