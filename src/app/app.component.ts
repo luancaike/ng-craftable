@@ -29,15 +29,21 @@ import {CraftableComponent} from 'ng-craftable';
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
                             (click)="craftable.undo()">
-                        <i class="bi bi-arrow-90deg-left"></i> Undo
+                        <i class="bi bi-arrow-90deg-left"></i>
                     </button>
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
                             (click)="craftable.redo()">
-                        <i class="bi bi-arrow-90deg-right"></i> Redo
+                        <i class="bi bi-arrow-90deg-right"></i>
                     </button>
                 </div>
                 <div class="btn-group  mt-2 mx-2">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="craftable.duplicate()">
+                        <i class="bi bi-files"></i>
+                        Duplicate
+                    </button>
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
                             (click)="craftable.copy()">
@@ -60,28 +66,48 @@ import {CraftableComponent} from 'ng-craftable';
                 <div class="btn-group  mt-2 mx-2">
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
-                            (click)="craftable.bringToFront()">
-                        <i class="bi bi-exclude"></i>
-                        Bring to Front
-                    </button>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            (click)="craftable.bringToBack()">
-                        <i class="bi bi-intersect"></i>
-                        Bring to Back
-                    </button>
-                    <button type="button"
-                            class="btn btn-sm btn-outline-secondary"
                             (click)="craftable.bringToForward()">
                         <i class="bi bi-front"></i>
                         Bring Forward
                     </button>
+                    <div class="btn-group" role="group">
+                        <button
+                            id="btnGroupDrop1"
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                            <li><a class="dropdown-item" (click)="craftable.bringToFront()" href="#">
+                                <i class="bi bi-intersect"></i>
+                                Bring to Front
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="btn-group mt-2 mx-2">
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
                             (click)="craftable.bringToBackward()">
                         <i class="bi bi-back"></i>
                         Bring Backward
                     </button>
+                    <div class="btn-group" role="group">
+                        <button
+                            id="btnGroupDrop1"
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                            <li><a class="dropdown-item" (click)="craftable.bringToBack()" href="#">
+                                <i class="bi bi-intersect"></i>
+                                Bring to Back
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="btn-group  mt-2 mx-2">
                     <button type="button"
