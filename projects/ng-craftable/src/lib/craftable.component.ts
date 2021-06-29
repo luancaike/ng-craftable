@@ -167,6 +167,50 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.detectChanges();
     }
 
+    bringToForward() {
+        const data = this.selectable.getSelectedLegos()
+            .map((lego) => ({
+                lego,
+                layerIndex: Math.max(this.allLegoConfig.indexOf(lego) + 1, 0)
+            }));
+        this.changeLegoLayer(data);
+        this.saveLocalHistory();
+        this.detectChanges();
+    }
+
+    bringToBackward() {
+        const data = this.selectable.getSelectedLegos()
+            .map((lego) => ({
+                lego,
+                layerIndex: Math.max(this.allLegoConfig.indexOf(lego) - 1, 0)
+            }));
+        this.changeLegoLayer(data);
+        this.saveLocalHistory();
+        this.detectChanges();
+    }
+
+    bringToFront() {
+        const data = this.selectable.getSelectedLegos()
+            .map((lego) => ({
+                lego,
+                layerIndex: Math.max(this.allLegoConfig.length - 1, 0)
+            }));
+        this.changeLegoLayer(data);
+        this.saveLocalHistory();
+        this.detectChanges();
+    }
+
+    bringToBack() {
+        const data = this.selectable.getSelectedLegos()
+            .map((lego) => ({
+                lego,
+                layerIndex:  Math.max(0, 0)
+            }));
+        this.changeLegoLayer(data);
+        this.saveLocalHistory();
+        this.detectChanges();
+    }
+
     drawNewLego(data = {}) {
         this.enableDraw = true;
         this.drawItemData = data;
@@ -443,6 +487,13 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     /**
      *  Private Methods
      */
+    private changeLegoLayer(data: { lego: any, layerIndex: number }[]) {
+        this.allLegoConfig = this.allLegoConfig.filter(lg => !data.find(({lego}) => lego === lg));
+        data.forEach(({lego, layerIndex}) => {
+            this.allLegoConfig.splice(layerIndex, 0, lego);
+        });
+    }
+
     private registerShortcuts() {
         this.shortcutService.registerShortcut(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
             (key) => this.moveLego(key));
