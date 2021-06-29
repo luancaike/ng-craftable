@@ -28,14 +28,9 @@
             </div>
             <div class="canvas-container"
                  #canvasContainer>
-                <div class="draw-preview">
-                </div>
-                <div class="selection-preview">
-                    <ng-template *ngTemplateOutlet="resizeTemplate; context: {$implicit: {}, isSelection: true}"></ng-template>
-                </div>
                 <div
                     #lego
-                    *ngFor="let item of allLegoConfig;let i = index;trackBy: trackById"
+                    *ngFor="let item of allLegoConfig; let i = index;trackBy: trackById"
                     [attr.data-key]="item.key"
                     (mousedown)="selectLego(item)"
                     style="display:none"
@@ -47,6 +42,11 @@
                             <ng-template *ngTemplateOutlet="template; context: {$implicit: item}"></ng-template>
                         </ng-container>
                     </div>
+                </div>
+                <div class="draw-preview">
+                </div>
+                <div class="selection-preview">
+                    <ng-template *ngTemplateOutlet="resizeTemplate; context: {$implicit: {}, isSelection: true}"></ng-template>
                 </div>
             </div>
         </div>

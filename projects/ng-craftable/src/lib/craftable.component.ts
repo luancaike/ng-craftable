@@ -150,6 +150,23 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.detectChanges();
     }
 
+    copy() {
+        this.localHistoryService.setTransferArea(this.selectable.getSelectedLegos());
+        this.detectChanges();
+    }
+
+    cut() {
+        this.localHistoryService.setTransferArea(this.selectable.getSelectedLegos());
+        this.deleteSelection();
+        this.detectChanges();
+    }
+
+    paste() {
+        this.localHistoryService.getTransferArea().forEach(lego => this.addNewLego(lego));
+        this.saveLocalHistory();
+        this.detectChanges();
+    }
+
     drawNewLego(data = {}) {
         this.enableDraw = true;
         this.drawItemData = data;
@@ -431,6 +448,12 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             (key) => this.moveLego(key));
         this.shortcutService.registerShortcut('Control+Z',
             () => this.undo());
+        this.shortcutService.registerShortcut('Control+C',
+            () => this.copy());
+        this.shortcutService.registerShortcut('Control+V',
+            () => this.paste());
+        this.shortcutService.registerShortcut('Control+X',
+            () => this.cut());
         this.shortcutService.registerShortcut('Control+Shift+Z',
             () => this.redo());
         this.shortcutService.registerShortcut(['Backspace', 'Delete'],

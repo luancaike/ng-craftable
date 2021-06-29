@@ -108,7 +108,7 @@
             .lego-item, .selection-preview {
                 position: absolute;
                 box-sizing: border-box;
-                z-index: 2;
+                z-index: 1;
 
                 &.in-group {
                     outline: #ccc 1px solid;
