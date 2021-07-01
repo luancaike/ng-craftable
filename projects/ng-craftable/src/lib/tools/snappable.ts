@@ -24,13 +24,14 @@ export class Snappable {
         const halfSideLength = Math.abs(size / 2);
         const endDistance = distance + size;
         const center = distance + halfSideLength;
+        let showGuide = false;
+        let guideLine = null;
 
         for (const item of lineGuides[axis]) {
             if (Array.isArray(ignoreAxisKey) && ignoreAxisKey.includes(item.parent)) {
                 break;
             }
             const position = item.position;
-            let showGuide = false;
 
             if (Math.abs(position - distance) <= snapSize && (directionHandler === 'start' || directionHandler === 'none')) {
                 if (isResize) {
@@ -40,10 +41,12 @@ export class Snappable {
                     lego[axis] = position;
                 }
                 showGuide = true;
+                guideLine = item
             } else if (Math.abs(center - position) <= snapSize) {
                 if (!isResize) {
                     lego[axis] = position - halfSideLength;
                     showGuide = true;
+                    guideLine = item
                 }
             } else if (Math.abs(endDistance - position) <= snapSize && (directionHandler === 'end' || directionHandler === 'none')) {
                 if (isResize) {
@@ -52,10 +55,11 @@ export class Snappable {
                     lego[axis] = position - size;
                 }
                 showGuide = true;
+                guideLine = item
             }
-            if (showGuide) {
-                callBackOnThrust(axis, position, item.parent);
-            }
+        }
+        if (showGuide && guideLine) {
+            callBackOnThrust(axis, guideLine.position, guideLine.parent);
         }
     }
 
