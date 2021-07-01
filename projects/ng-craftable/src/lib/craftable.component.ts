@@ -48,7 +48,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     @ViewChild('guideContainer') private guideContainerRef: ElementRef<HTMLElement>;
 
     @Input() public allLegoConfig: LegoConfig[] = [];
-    @Input() public snapSize = 5;
+    @Input() public snapSize = 10;
     @Input() public gridSize = 10;
     @Input() public minWidth = 50;
     @Input() public minHeight = 50;
@@ -60,7 +60,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() public visualizationMode = false;
     @Input() public scale = 1;
 
-    @Output() public selectionChange = new EventEmitter();
+    @Output() public selectionChange = new EventEmitter<string[]>();
     @Output() public drawStart = new EventEmitter();
     @Output() public drawing = new EventEmitter();
     @Output() public drawEnd = new EventEmitter();
@@ -265,9 +265,8 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             return;
         }
         this.selectable.selectedLegoKeys = [item.key];
-        this.markSelectedLegos();
-        this.toggleSelectionGuidelines(false);
-        this.selectionChange.emit(item.key);
+        this.updateSelectionArea();
+        this.selectionChange.emit([item.key]);
     }
 
     selectAreaByLegos(items: LegoConfig[]): void {
@@ -275,9 +274,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             return;
         }
         this.selectable.selectedLegoKeys = items.map(({key}) => key);
-        this.markSelectedLegos(true);
-        this.toggleSelectionGuidelines();
-        this.selectable.resizeSelectionAreaBySelectedLego(items);
+        this.updateSelectionArea();
         this.selectionChange.emit(this.selectable.selectedLegoKeys);
     }
 
@@ -297,8 +294,9 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     clearSelection(): void {
-        this.selectionChange.emit(null);
+        this.selectionChange.emit([]);
         this.unSelectAllLegoInView();
+        this.toggleSelectionGuidelines(false);
         this.selectable.selectedLegoKeys = [];
     }
 
@@ -392,13 +390,8 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         if (!this.validInitDrag(legoConfig, isSelection)) {
             return;
         }
-
-        const selectedLego = this.selectable.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
-        if (this.selectable.selectedLegoKeys.length > 1) {
-            this.draggable.moveItem(eventStart, this.selectable.selectionArea, selectedLego);
-        } else {
-            selectedLego.forEach(item => this.draggable.moveItem(eventStart, item));
-        }
+        const selectedLego = this.selectable.getSelectedLegos();
+        this.draggable.moveItem(eventStart, this.selectable.selectionArea, selectedLego);
     }
 
     drawHandler(eventStart: MouseEvent): void {
@@ -414,11 +407,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             return;
         }
         const selectedLego = this.selectable.selectedLegoKeys.map(key => this.allLegoConfig.find(el => el.key === key));
-        if (isSelection) {
-            this.resizable.resizeItemGroup(eventStart, direction, this.selectable.selectionArea, selectedLego);
-        } else {
-            this.resizable.resizeItem(eventStart, direction, legoConfig);
-        }
+        this.resizable.resizeItemGroup(eventStart, direction, this.selectable.selectionArea, selectedLego);
     }
 
     snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey: string[] = [], directionHandler: 'start' | 'end' | 'none' = 'none'): void {
@@ -442,9 +431,15 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         });
     }
 
+    updateSelectionArea(): void {
+        this.markSelectedLegos();
+        this.toggleSelectionGuidelines();
+        this.selectable.selectionAreaOfSelectedLegos();
+    }
+
     showGuideLines(axis: 'x' | 'y', position: number): void {
         const className = 'line-guide-' + axis;
-        const positionScale = position * this.scale;
+        const positionScale = Math.floor(position * this.scale);
         const lineGuideId = `line-guide-${axis}-${positionScale}`;
         const existsGuideThisValue = this.document.querySelector(`[id="${lineGuideId}"]`);
         if (!!existsGuideThisValue) {
@@ -453,7 +448,8 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         const element = this.document.createElement('div');
         element.id = lineGuideId;
         element.classList.add(className);
-        element.style[axis === 'x' ? 'left' : 'top'] = `${positionScale}px`;
+        const fixAxisXWidth = Math.max(positionScale - (axis === 'x' ? 1 : 1), 0)
+        element.style[axis === 'x' ? 'left' : 'top'] = `${fixAxisXWidth}px`;
         this.guideContainer.appendChild(element);
     }
 
@@ -490,7 +486,8 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         }
     }
 
-    markSelectedLegos(inGroupLego = false) {
+    markSelectedLegos() {
+        const inGroupLego = this.selectable.selectedLegoKeys.length > 1;
         this.document.querySelectorAll('.lego-item.select').forEach(lego => this.renderer.removeClass(lego, 'select'));
         this.selectable.selectedLegoKeys
             .map(key => this.document.querySelector<HTMLDivElement>(`[data-key="${key}"]`))

@@ -21,7 +21,8 @@
     "paths": {
       "ng-craftable": [
         "dist/ng-craftable/ng-craftable",
-        "dist/ng-craftable"
+        "dist/ng-craftable",
+        "projects/ng-craftable/src/public-api"
       ]
     }
   }

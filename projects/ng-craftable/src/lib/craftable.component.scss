@@ -24,8 +24,8 @@
     }
 
     &.visualization {
-        & .resize-wrapper, & .resize-handler, & .drag-wrapper {
-            display: none;
+        & .resize-wrapper, & .resize-handler, & .drag-wrapper, & .selection-preview {
+            display: none!important;
         }
 
         & .canvas-container {

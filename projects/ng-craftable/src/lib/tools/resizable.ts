@@ -108,11 +108,6 @@ export class Resizable {
     }
 
     @runOutside
-    resizeItem(eventStart: MouseEvent, direction: string, itemResizing): void {
-        this.resize(eventStart, direction, itemResizing);
-    }
-
-    @runOutside
     resizeItemGroup(eventStart: MouseEvent, direction: string, itemResizing, selectionGroup: LegoConfig[]): void {
         this.resize(eventStart, direction, itemResizing, selectionGroup);
     }

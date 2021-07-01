@@ -45,6 +45,7 @@ export class Draggable {
             this.drawComponent.updateLegoData(itemToMove);
             this.drawComponent.updateLegoViewData(itemToMove);
             this.drawComponent.saveLocalHistory();
+            this.drawComponent.updateSelectionArea();
             dragSub.unsubscribe();
             dragEndSub.unsubscribe();
             this.drawComponent.isDragging = false;
