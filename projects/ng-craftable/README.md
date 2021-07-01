@@ -4,20 +4,20 @@ This library was generated with [Angular CLI](https://github.com/angular/angular
 
 ## Code scaffolding
 
-Run `ng generate component component-name --project drag-drop-draw` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project drag-drop-draw`.
-> Note: Don't forget to add `--project drag-drop-draw` or else it will be added to the default project in your `angular.json` file.
+Run `ng generate component component-name --project ng-craftable` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project ng-craftable`.
+> Note: Don't forget to add `--project ng-craftable` or else it will be added to the default project in your `angular.json` file.
 
 ## Build
 
-Run `ng build drag-drop-draw` to build the project. The build artifacts will be stored in the `dist/` directory.
+Run `ng build ng-craftable` to build the project. The build artifacts will be stored in the `dist/` directory.
 
 ## Publishing
 
-After building your library with `ng build drag-drop-draw`, go to the dist folder `cd dist/drag-drop-draw` and run `npm publish`.
+After building your library with `ng build ng-craftable`, go to the dist folder `cd dist/ng-craftable` and run `npm publish`.
 
 ## Running unit tests
 
-Run `ng test drag-drop-draw` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run `ng test ng-craftable` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
 ## Further help
 
