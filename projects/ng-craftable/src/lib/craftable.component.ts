@@ -55,7 +55,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() public enableResize = true;
     @Input() public enableDrag = true;
     @Input() public drawItemData: { [k: string]: any };
-    @Input() public enableStepGrid = true;
+    @Input() public enableStepGrid = false;
     @Input() public enableDraw = false;
     @Input() public visualizationMode = false;
     @Input() public scale = 1;
@@ -421,7 +421,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         }
     }
 
-    snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey: string[] = []): void {
+    snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey: string[] = [], directionHandler: 'start' | 'end' | 'none' = 'none'): void {
         this.hiddenGuideLines();
         const params = {
             lineGuides: this.lineGuides,
@@ -431,8 +431,8 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             ignoreAxisKey,
             isResize
         };
-        this.snappable.checkLegoInSnap({...params, axis: 'x'});
-        this.snappable.checkLegoInSnap({...params, axis: 'y'});
+        this.snappable.checkLegoInSnap({...params, axis: 'x', directionHandler});
+        this.snappable.checkLegoInSnap({...params, axis: 'y', directionHandler});
     }
 
     hiddenGuideLines(): void {
@@ -598,7 +598,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     }
 
-    @debounce()
+    @debounce(100)
     private detectChanges() {
         this.cdr.detectChanges();
     }

@@ -1,11 +1,12 @@
 import {runOutside} from '../util';
 import {CraftableComponent} from '../craftable.component';
-import { LegoConfig } from '../model';
+import {LegoConfig} from '../model';
 
 export class Resizable {
 
     constructor(private drawComponent: CraftableComponent) {
     }
+
     @runOutside
     private resize(eventStart: MouseEvent, direction: string, itemResizing, selectionGroup: LegoConfig[] = []): void {
         this.drawComponent.isResizing = true;
@@ -30,6 +31,7 @@ export class Resizable {
         }));
 
         const dragSub = drag$.subscribe(eventDrag => {
+            let directionHandler: 'start' | 'end';
             const resizeByNegativeAxis = axis => {
                 const pageAxis = axis === 'x' ? eventDrag.pageX : eventDrag.pageY;
                 const initial = axis === 'x' ? initialX : initialY;
@@ -57,21 +59,25 @@ export class Resizable {
                 itemResizing[axis === 'x' ? 'width' : 'height'] = this.drawComponent.fixByGridSize(size + reduce - initial);
             };
             if (direction.indexOf('right') >= 0) {
+                directionHandler = 'end';
                 resizeByPositiveAxis('x');
             }
             if (direction.indexOf('left') >= 0) {
+                directionHandler = 'start';
                 resizeByNegativeAxis('x');
             }
 
             if (direction.indexOf('top') >= 0) {
+                directionHandler = 'start';
                 resizeByNegativeAxis('y');
             }
             if (direction.indexOf('bottom') >= 0) {
+                directionHandler = 'end';
                 resizeByPositiveAxis('y');
             }
             itemResizing.width = Math.round(Math.max(this.drawComponent.minWidth, itemResizing.width));
             itemResizing.height = Math.round(Math.max(this.drawComponent.minHeight, itemResizing.height));
-            this.drawComponent.snapToGuideLine(itemResizing, true, selectionGroup.map(({key}) => key));
+            this.drawComponent.snapToGuideLine(itemResizing, true, selectionGroup.map(({key}) => key), directionHandler);
             this.drawComponent.updateLegoViewPositionAndSize(itemResizing);
             this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, itemResizing.x, itemResizing.y, itemResizing.width, itemResizing.height);
             const newLegoGroupPosition = legoGroupDiffScale.map((oldLego) => ({
@@ -103,10 +109,11 @@ export class Resizable {
 
     @runOutside
     resizeItem(eventStart: MouseEvent, direction: string, itemResizing): void {
-        this.resize(eventStart, direction, itemResizing)
+        this.resize(eventStart, direction, itemResizing);
     }
+
     @runOutside
     resizeItemGroup(eventStart: MouseEvent, direction: string, itemResizing, selectionGroup: LegoConfig[]): void {
-        this.resize(eventStart, direction, itemResizing, selectionGroup)
+        this.resize(eventStart, direction, itemResizing, selectionGroup);
     }
 }
