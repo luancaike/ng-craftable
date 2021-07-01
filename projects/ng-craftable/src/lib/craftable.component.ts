@@ -402,7 +402,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.selectable.selectArea(eventStart);
     }
 
-    resizeHandler(eventStart: MouseEvent, direction: string, legoConfig: LegoConfig, isSelection = false): void {
+    resizeHandler(eventStart: MouseEvent, direction: string): void {
         if (!this.enableResize) {
             return;
         }
@@ -415,7 +415,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         const params = {
             lineGuides: this.lineGuides,
             snapSize: this.snapSize,
-            callBackOnThrust: (axis, position) => this.showGuideLines(axis, position),
+            callBackOnThrust: (axis, position, parent) => this.showGuideLines(axis, position, parent),
             lego,
             ignoreAxisKey,
             isResize
@@ -426,8 +426,12 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     hiddenGuideLines(): void {
         const data = this.document.querySelectorAll<HTMLDivElement>('[class*="line-guide-"]');
+        const legos = this.document.querySelectorAll<HTMLDivElement>('.highlight-guide');
         data.forEach(el => {
             el.remove();
+        });
+        legos.forEach(el => {
+            el.classList.remove('highlight-guide');
         });
     }
 
@@ -437,7 +441,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.selectable.selectionAreaOfSelectedLegos();
     }
 
-    showGuideLines(axis: 'x' | 'y', position: number): void {
+    showGuideLines(axis: 'x' | 'y', position: number, parent: string): void {
         const className = 'line-guide-' + axis;
         const positionScale = Math.floor(position * this.scale);
         const lineGuideId = `line-guide-${axis}-${positionScale}`;
@@ -448,9 +452,17 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         const element = this.document.createElement('div');
         element.id = lineGuideId;
         element.classList.add(className);
-        const fixAxisXWidth = Math.max(positionScale - (axis === 'x' ? 1 : 1), 0)
+        const fixAxisXWidth = Math.max(positionScale - (axis === 'x' ? 1 : 1), 0);
         element.style[axis === 'x' ? 'left' : 'top'] = `${fixAxisXWidth}px`;
+        this.highlightParent(parent);
         this.guideContainer.appendChild(element);
+    }
+
+    highlightParent(key: string) {
+        const lego = this.document.querySelector<HTMLDivElement>(`[data-key="${key}"]`);
+        if (lego) {
+            lego.classList.add('highlight-guide');
+        }
     }
 
     removeGuideLinesByLego(item): void {

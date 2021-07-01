@@ -111,6 +111,19 @@
                 box-sizing: border-box;
                 z-index: 1;
 
+                &.highlight-guide::after {
+                    box-sizing: border-box;
+                    display: block;
+                    content: '';
+                    width: 100%;
+                    height: 100%;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    background: rgba(0, 191, 255, 0.2);
+                    border: 2px solid deepskyblue;
+                }
+
                 &.in-group {
                     outline: #ccc 1px solid;
                     z-index: 1;

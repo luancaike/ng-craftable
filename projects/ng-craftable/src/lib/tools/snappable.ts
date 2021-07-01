@@ -43,8 +43,8 @@ export class Snappable {
             } else if (Math.abs(center - position) <= snapSize) {
                 if (!isResize) {
                     lego[axis] = position - halfSideLength;
+                    showGuide = true;
                 }
-                showGuide = true;
             } else if (Math.abs(endDistance - position) <= snapSize && (directionHandler === 'end' || directionHandler === 'none')) {
                 if (isResize) {
                     lego[side] = Math.abs(position - distance);
@@ -54,7 +54,7 @@ export class Snappable {
                 showGuide = true;
             }
             if (showGuide) {
-                callBackOnThrust(axis, position);
+                callBackOnThrust(axis, position, item.parent);
             }
         }
     }
