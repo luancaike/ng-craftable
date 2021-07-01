@@ -33,15 +33,15 @@ export class Draggable {
                 x: Math.round(lego.x + (itemToMove.x - positionInitialX)),
                 y: Math.round(lego.y + (itemToMove.y - positionInitialY)),
             }));
-            newLegoGroupPosition.forEach((lego) => this.drawComponent.updateLegoViewPositionAndSize(lego));
+            newLegoGroupPosition.forEach((lego) => {
+                this.drawComponent.updateLegoViewPositionAndSize(lego);
+                this.drawComponent.updateLegoData(lego);
+                this.drawComponent.updateLegoViewData(lego);
+            });
             this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, itemToMove.x, itemToMove.y, itemToMove.width, itemToMove.height);
         });
         dragEndSub = dragEnd$.subscribe(() => {
             this.drawComponent.hiddenGuideLines();
-            newLegoGroupPosition.forEach(lego => {
-                this.drawComponent.updateLegoData(lego);
-                this.drawComponent.updateLegoViewData(lego);
-            });
             this.drawComponent.updateLegoData(itemToMove);
             this.drawComponent.updateLegoViewData(itemToMove);
             this.drawComponent.saveLocalHistory();

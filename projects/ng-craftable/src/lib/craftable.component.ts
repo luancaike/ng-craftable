@@ -482,7 +482,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     updateLegoViewData(item: LegoConfig) {
         this.updateLegoViewPositionAndSize(item);
-        this.calculateLineGuidesOfLego(item);
+        this.resetGuideLines()
     }
 
     updateLegoViewPositionAndSize(item: LegoConfig): void {

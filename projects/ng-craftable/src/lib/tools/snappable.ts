@@ -29,7 +29,7 @@ export class Snappable {
 
         for (const item of lineGuides[axis]) {
             if (Array.isArray(ignoreAxisKey) && ignoreAxisKey.includes(item.parent)) {
-                break;
+                continue;
             }
             const position = item.position;
 
