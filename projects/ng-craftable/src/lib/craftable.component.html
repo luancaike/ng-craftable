@@ -29,11 +29,11 @@
             </div>
             <div class="canvas-container"
                  #canvasContainer>
-                <ng-container *ngFor="let item of allLegoConfig; let i = index;trackBy: trackById">
+                <ng-container *ngFor="let item of legoData; let i = index;trackBy: trackById">
                     <div
                         #lego
                         [attr.data-key]="item.key"
-                        (mousedown)="selectLego(item)"
+                        (mousedown)="selectAreaByLegos([item])"
                         style="display:none"
                         class="lego-item"
                     >

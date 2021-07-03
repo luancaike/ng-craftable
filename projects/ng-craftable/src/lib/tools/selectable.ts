@@ -4,9 +4,17 @@ import {LegoConfig} from '../model';
 
 export class Selectable {
     public selectionArea: LegoConfig;
-    public selectedLegoKeys: string[];
+    private selectedLegoKeys: string[];
 
     constructor(private drawComponent: CraftableComponent) {
+    }
+
+    setSelectedLegoKeys(keys: string[]): void {
+        this.selectedLegoKeys = keys;
+    }
+
+    getSelectedLegoKeys(): string[] {
+        return this.selectedLegoKeys;
     }
 
     @runOutside
@@ -25,8 +33,8 @@ export class Selectable {
         selectionArea.y = startY;
         this.drawComponent.isSelecting = true;
         dragSub = drag$.subscribe(eventDrag => {
-            if(fastClick){
-                return
+            if (fastClick) {
+                return;
             }
             this.drawComponent.toggleSelectionGuidelines();
             const mouseX = (eventDrag.pageX - minBoundX) / this.drawComponent.scale;
@@ -60,7 +68,7 @@ export class Selectable {
 
     getSelectedLegos() {
         return this.selectedLegoKeys.reduce((acc, key) => {
-            const result = this.drawComponent.allLegoConfig.find(el => el.key === key);
+            const result = this.drawComponent.legoData.find(el => el.key === key);
             if (result) {
                 acc.push(result);
             }
@@ -77,12 +85,16 @@ export class Selectable {
         const minY = this.selectionArea.y;
         const maxX = this.selectionArea.x + this.selectionArea.width;
         const maxY = this.selectionArea.y + this.selectionArea.height;
-        const selection = this.drawComponent.allLegoConfig
+        const selection = this.drawComponent.legoData
             .filter(lego => (lego.x >= minX) && ((lego.x + lego.width) <= maxX)
                 && (lego.y >= minY) && ((lego.y + lego.height) <= maxY));
         this.resizeSelectionAreaBySelectedLego(selection);
         this.selectedLegoKeys = selection.map(({key}) => key);
         this.drawComponent.markSelectedLegos();
+    }
+
+    updateSelectionAreaBySelectedLego(): void {
+        this.resizeSelectionAreaBySelectedLego(this.getSelectedLegos());
     }
 
     resizeSelectionAreaBySelectedLego(selection: LegoConfig[]): void {

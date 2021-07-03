@@ -48,7 +48,7 @@ export class Renderable {
             newLego.width = Math.round(Math.max(this.drawComponent.minWidth, width));
             newLego.height = Math.round(Math.max(this.drawComponent.minHeight, height));
             if (width && height) {
-                this.drawComponent.addNewLego(newLego);
+                this.drawComponent.appendLego(newLego);
                 width = 0;
                 height = 0;
             }
