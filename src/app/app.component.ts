@@ -27,14 +27,30 @@ import {CraftableComponent} from 'ng-craftable';
                 </div>
                 <div class="btn-group  mt-2 mx-2">
                     <button type="button"
+                            title="Undo"
                             class="btn btn-sm btn-outline-secondary"
                             (click)="craftable.undo()">
                         <i class="bi bi-arrow-90deg-left"></i>
                     </button>
                     <button type="button"
+                            title="Redo"
                             class="btn btn-sm btn-outline-secondary"
                             (click)="craftable.redo()">
                         <i class="bi bi-arrow-90deg-right"></i>
+                    </button>
+                </div>
+                <div class="btn-group  mt-2 mx-2">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            title="Select All"
+                            (click)="craftable.selectAll()">
+                        <i class="bi bi-check-all" style="font-size: 1rem;"></i>
+                    </button>
+                    <button type="button"
+                            title="Unselect All"
+                            class="btn btn-sm btn-outline-secondary"
+                            (click)="craftable.unSelectAll()">
+                        <i class="bi bi-x" style="font-size: 1rem;"></i>
                     </button>
                 </div>
                 <div class="btn-group  mt-2 mx-2">

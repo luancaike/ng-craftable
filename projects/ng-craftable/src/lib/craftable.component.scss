@@ -23,9 +23,15 @@
         cursor: crosshair;
     }
 
+    &.drag-mode {
+        .drag-wrapper {
+            cursor: grabbing !important;
+        }
+    }
+
     &.visualization {
         & .resize-wrapper, & .resize-handler, & .drag-wrapper, & .selection-preview {
-            display: none!important;
+            display: none !important;
         }
 
         & .canvas-container {

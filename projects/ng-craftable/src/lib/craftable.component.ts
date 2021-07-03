@@ -134,6 +134,25 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     /**
      *  Public Api
      */
+    selectAll(): void {
+        if (this.visualizationMode || this.isResizing || this.isDragging || this.isSelecting) {
+            return;
+        }
+        this.selectable.selectedLegoKeys = this.allLegoConfig.map(({key}) => key);
+        this.updateSelectionArea();
+        this.selectionChange.emit(this.selectable.selectedLegoKeys);
+    }
+
+    unSelectAll(): void {
+        if (this.visualizationMode || this.isResizing || this.isDragging || this.isSelecting) {
+            return;
+        }
+        this.selectable.selectedLegoKeys = [];
+        this.updateSelectionArea();
+        this.selectionChange.emit(this.selectable.selectedLegoKeys);
+    }
+
+
     undo() {
         this.allLegoConfig = this.localHistoryService.undoPoint();
         this.allLegoConfig.forEach(el => this.updateLegoViewData(el));
@@ -482,7 +501,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     updateLegoViewData(item: LegoConfig) {
         this.updateLegoViewPositionAndSize(item);
-        this.resetGuideLines()
+        this.resetGuideLines();
     }
 
     updateLegoViewPositionAndSize(item: LegoConfig): void {
@@ -540,6 +559,10 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             () => this.cut());
         this.shortcutService.registerShortcut('Control+Shift+Z',
             () => this.redo());
+        this.shortcutService.registerShortcut('Control+A',
+            () => this.selectAll());
+        this.shortcutService.registerShortcut('Control+Shift+A',
+            () => this.unSelectAll());
         this.shortcutService.registerShortcut(['Backspace', 'Delete'],
             () => this.deleteSelection());
     }

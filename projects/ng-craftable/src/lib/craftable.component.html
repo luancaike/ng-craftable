@@ -20,6 +20,7 @@
 
 <div class="main-area"
      [class.draw-mode]="enableDraw"
+     [class.drag-mode]="isDragging"
      [class.visualization]="visualizationMode"
      #mainArea (mousedown)="mouseDownInMainArea($event)">
     <div class="align-wrapper">
