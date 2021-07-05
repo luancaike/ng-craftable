@@ -31,7 +31,7 @@ import {Renderable} from './tools/renderable';
 import {Snappable} from './tools/snappable';
 import {LegoConfig, LinesGuide} from './model';
 import {LocalHistoryService} from './local-history.service';
-import {Shortcuttable} from './tools/shortcuttable';
+import {Shortcutable} from './tools/shortcutable';
 
 @Component({
     selector: 'ng-craftable',
@@ -96,7 +96,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     private selectable: Selectable;
     private renderable: Renderable;
     private snappable: Snappable;
-    private shortcuttable: Shortcuttable;
+    private shortcuttable: Shortcutable;
 
     constructor(
         public renderer: Renderer2,
@@ -109,7 +109,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.selectable = new Selectable(this);
         this.renderable = new Renderable(this);
         this.snappable = new Snappable(this);
-        this.shortcuttable = new Shortcuttable(this);
+        this.shortcuttable = new Shortcutable(this);
     }
 
     get guideContainer(): HTMLElement {
