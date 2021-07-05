@@ -38,6 +38,7 @@
             background: white !important;
 
             .lego-container {
+                overflow: hidden;
                 pointer-events: auto;
             }
         }
@@ -161,9 +162,7 @@
                     height: 100%;
                     width: 100%;
                     box-sizing: border-box;
-                    overflow: hidden;
                     text-align: left;
-
                 }
 
                 .resize-handler {

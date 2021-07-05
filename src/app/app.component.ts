@@ -137,7 +137,7 @@ import {CraftableComponent} from 'ng-craftable';
             <div class="workspace">
                 <ng-craftable #craftable [visualizationMode]="visualizationMode">
                     <ng-template #template let-data>
-                        <div class="card h-100">
+                        <div class="card h-100" style="min-width: 200px">
                             <div class="card-header">
                                 {{data.key}}
                             </div>

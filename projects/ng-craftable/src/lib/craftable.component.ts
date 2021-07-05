@@ -137,17 +137,15 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
      *  Public Api
      */
     selectAll(): void {
-        if (this.checkInInteractionOrVisualizationMode()) {
-            return;
+        if (!this.checkInInteractionOrVisualizationMode()) {
+            this.selectAreaByLegos(this.legoData);
         }
-        this.selectAreaByLegos(this.legoData);
     }
 
     unSelectAll(): void {
-        if (this.checkInInteractionOrVisualizationMode()) {
-            return;
+        if (!this.checkInInteractionOrVisualizationMode()) {
+            this.selectAreaByLegos([]);
         }
-        this.selectAreaByLegos([]);
     }
 
 
@@ -261,13 +259,12 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     selectAreaByLegos(items: LegoConfig[]): void {
-        if (this.checkInInteractionOrVisualizationMode()) {
-            return;
+        if (!this.checkInInteractionOrVisualizationMode()) {
+            const keys = items.map(({key}) => key);
+            this.select.setSelectedLegoKeys(keys);
+            this.updateSelectionArea();
+            this.selectionChange.emit(keys);
         }
-        const keys = items.map(({key}) => key);
-        this.select.setSelectedLegoKeys(keys);
-        this.updateSelectionArea();
-        this.selectionChange.emit(keys);
     }
 
     deleteLego(key): void {
@@ -388,7 +385,9 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     drawHandler(eventStart: MouseEvent): void {
-        this.draw.draw(eventStart);
+        if (!this.checkInInteractionOrVisualizationMode()) {
+            this.draw.draw(eventStart);
+        }
     }
 
     selectionHandler(eventStart: MouseEvent): void {

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CraftableComponent } from './craftable.component';
 
-import { CraftableComponent } from './drag-drop-draw.component';
 
 describe('DragDropDrawComponent', () => {
   let component: CraftableComponent;
