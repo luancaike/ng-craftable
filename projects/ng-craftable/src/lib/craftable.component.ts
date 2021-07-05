@@ -31,7 +31,7 @@ import {Renderable} from './tools/renderable';
 import {Snappable} from './tools/snappable';
 import {LegoConfig, LinesGuide} from './model';
 import {LocalHistoryService} from './local-history.service';
-import {ShortcutService} from './shortcut.service';
+import {Shortcuttable} from './tools/shortcuttable';
 
 @Component({
     selector: 'ng-craftable',
@@ -96,11 +96,11 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     private selectable: Selectable;
     private renderable: Renderable;
     private snappable: Snappable;
+    private shortcuttable: Shortcuttable;
 
     constructor(
         public renderer: Renderer2,
         public localHistoryService: LocalHistoryService,
-        public shortcutService: ShortcutService,
         @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
     ) {
@@ -109,6 +109,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.selectable = new Selectable(this);
         this.renderable = new Renderable(this);
         this.snappable = new Snappable(this);
+        this.shortcuttable = new Shortcuttable(this);
     }
 
     get guideContainer(): HTMLElement {
@@ -528,24 +529,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     private registerShortcuts() {
-        this.shortcutService.registerShortcut(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
-            (key) => this.moveLego(key));
-        this.shortcutService.registerShortcut('Control+Z',
-            () => this.undo());
-        this.shortcutService.registerShortcut('Control+C',
-            () => this.copy());
-        this.shortcutService.registerShortcut('Control+V',
-            () => this.paste());
-        this.shortcutService.registerShortcut('Control+X',
-            () => this.cut());
-        this.shortcutService.registerShortcut('Control+Shift+Z',
-            () => this.redo());
-        this.shortcutService.registerShortcut('Control+A',
-            () => this.selectAll());
-        this.shortcutService.registerShortcut('Control+Shift+A',
-            () => this.unSelectAll());
-        this.shortcutService.registerShortcut(['Backspace', 'Delete'],
-            () => this.deleteSelection());
+        this.shortcuttable.registerShortcuts();
     }
 
     private fixScaleSize(): void {
@@ -630,10 +614,10 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             }, 100);
         });
         this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown').subscribe(event => {
-            this.shortcutService.onKeyDown(event);
+            this.shortcuttable.onKeyDown(event);
         });
         this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup').subscribe(event => {
-            this.shortcutService.onKeyUp(event);
+            this.shortcuttable.onKeyUp(event);
         });
         this.registerShortcuts();
         this.legoData.forEach(lego => this.updateLegoViewData(lego));
