@@ -2,7 +2,7 @@ import {CraftableComponent} from '../craftable.component';
 import {runOutside} from '../util';
 import {LegoConfig} from '../model';
 
-export class Selectable {
+export class Select {
     public selectionArea: LegoConfig;
     private selectedLegoKeys: string[];
 

@@ -2,7 +2,7 @@ import {runOutside} from '../util';
 import {Subscription} from 'rxjs';
 import { CraftableComponent } from '../craftable.component';
 
-export class Renderable {
+export class Draw {
 
     constructor(private drawComponent: CraftableComponent) {
     }

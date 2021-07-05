@@ -12,7 +12,7 @@ type CheckLegoInSnapDto = {
     ignoreAxisKey?: any[]
 }
 
-export class Snappable {
+export class Snap {
 
     constructor(private drawComponent: CraftableComponent) {
     }

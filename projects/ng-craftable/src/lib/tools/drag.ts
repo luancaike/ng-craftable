@@ -3,7 +3,7 @@ import {Subscription} from 'rxjs';
 import {runOutside} from '../util';
 import { LegoConfig } from '../model';
 
-export class Draggable {
+export class Drag {
 
     constructor(private drawComponent: CraftableComponent) {
     }

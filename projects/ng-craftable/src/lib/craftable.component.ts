@@ -24,14 +24,14 @@ import {fromEvent, Subscription} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
 import {v4 as uuid} from 'uuid';
 import {debounce, runOutside} from './util';
-import {Resizable} from './tools/resizable';
-import {Draggable} from './tools/draggable';
-import {Selectable} from './tools/selectable';
-import {Renderable} from './tools/renderable';
-import {Snappable} from './tools/snappable';
+import {Resize} from './tools/resize';
+import {Drag} from './tools/drag';
+import {Select} from './tools/select';
+import {Draw} from './tools/draw';
+import {Snap} from './tools/snap';
 import {LegoConfig, LinesGuide} from './model';
 import {LocalHistoryService} from './local-history.service';
-import {Shortcutable} from './tools/shortcutable';
+import {Shortcut} from './tools/shortcut';
 
 @Component({
     selector: 'ng-craftable',
@@ -91,12 +91,12 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     private keyDown$: Subscription;
     private keyUp$: Subscription;
     private resizeDebounce;
-    private resizable: Resizable;
-    private draggable: Draggable;
-    private selectable: Selectable;
-    private renderable: Renderable;
-    private snappable: Snappable;
-    private shortcuttable: Shortcutable;
+    private resize: Resize;
+    private drag: Drag;
+    private select: Select;
+    private draw: Draw;
+    private snap: Snap;
+    private shortcut: Shortcut;
 
     constructor(
         public renderer: Renderer2,
@@ -104,12 +104,12 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
     ) {
-        this.resizable = new Resizable(this);
-        this.draggable = new Draggable(this);
-        this.selectable = new Selectable(this);
-        this.renderable = new Renderable(this);
-        this.snappable = new Snappable(this);
-        this.shortcuttable = new Shortcutable(this);
+        this.resize = new Resize(this);
+        this.drag = new Drag(this);
+        this.select = new Select(this);
+        this.draw = new Draw(this);
+        this.snap = new Snap(this);
+        this.shortcut = new Shortcut(this);
     }
 
     get guideContainer(): HTMLElement {
@@ -161,12 +161,12 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     copy() {
-        this.localHistoryService.setTransferArea(this.selectable.getSelectedLegos());
+        this.localHistoryService.setTransferArea(this.select.getSelectedLegos());
         this.detectChanges();
     }
 
     cut() {
-        this.localHistoryService.setTransferArea(this.selectable.getSelectedLegos());
+        this.localHistoryService.setTransferArea(this.select.getSelectedLegos());
         this.deleteSelection();
         this.detectChanges();
     }
@@ -184,7 +184,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     bringToForward() {
-        const data = this.selectable.getSelectedLegos()
+        const data = this.select.getSelectedLegos()
             .map((lego) => ({
                 lego,
                 layerIndex: Math.max(this.legoData.indexOf(lego) + 1, 0)
@@ -195,7 +195,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     bringToBackward() {
-        const data = this.selectable.getSelectedLegos()
+        const data = this.select.getSelectedLegos()
             .map((lego) => ({
                 lego,
                 layerIndex: Math.max(this.legoData.indexOf(lego) - 1, 0)
@@ -206,7 +206,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     bringToFront() {
-        const data = this.selectable.getSelectedLegos()
+        const data = this.select.getSelectedLegos()
             .map((lego) => ({
                 lego,
                 layerIndex: Math.max(this.legoData.length - 1, 0)
@@ -217,7 +217,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     bringToBack() {
-        const data = this.selectable.getSelectedLegos()
+        const data = this.select.getSelectedLegos()
             .map((lego) => ({
                 lego,
                 layerIndex: Math.max(0, 0)
@@ -240,11 +240,11 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             ArrowLeft: (lego) => lego.y -= (this.gridSize + (lego.y % this.gridSize)),
             ArrowRight: (lego) => lego.x += (this.gridSize - (lego.x % this.gridSize))
         };
-        this.selectable.getSelectedLegos().forEach(lego => {
+        this.select.getSelectedLegos().forEach(lego => {
             keysActions[keyboardKey]?.(lego);
             this.updateLegoViewPositionAndSize(lego);
         });
-        this.selectable.updateSelectionAreaBySelectedLego();
+        this.select.updateSelectionAreaBySelectedLego();
     }
 
     appendLego(newLego: LegoConfig) {
@@ -264,7 +264,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             return;
         }
         const keys = items.map(({key}) => key);
-        this.selectable.setSelectedLegoKeys(keys);
+        this.select.setSelectedLegoKeys(keys);
         this.updateSelectionArea();
         this.selectionChange.emit(keys);
     }
@@ -274,7 +274,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     deleteSelection(): void {
-        const selectedLegoKeys = this.selectable.getSelectedLegoKeys();
+        const selectedLegoKeys = this.select.getSelectedLegoKeys();
         selectedLegoKeys.forEach(key => {
             this.deleteLego(key);
             this.removeGuideLinesByLego({key});
@@ -289,7 +289,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.selectionChange.emit([]);
         this.unSelectAllLegoInView();
         this.toggleSelectionGuidelines(false);
-        this.selectable.setSelectedLegoKeys([]);
+        this.select.setSelectedLegoKeys([]);
     }
 
     saveLocalHistory() {
@@ -382,25 +382,25 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         if (!this.validInitDrag(legoConfig, isSelection)) {
             return;
         }
-        const selectedLego = this.selectable.getSelectedLegos();
-        this.draggable.moveItem(eventStart, this.selectable.selectionArea, selectedLego);
+        const selectedLego = this.select.getSelectedLegos();
+        this.drag.moveItem(eventStart, this.select.selectionArea, selectedLego);
     }
 
     drawHandler(eventStart: MouseEvent): void {
-        this.renderable.draw(eventStart);
+        this.draw.draw(eventStart);
     }
 
     selectionHandler(eventStart: MouseEvent): void {
-        this.selectable.selectArea(eventStart);
+        this.select.selectArea(eventStart);
     }
 
     resizeHandler(eventStart: MouseEvent, direction: string): void {
         if (!this.enableResize) {
             return;
         }
-        const selectedLegoKeys = this.selectable.getSelectedLegoKeys();
+        const selectedLegoKeys = this.select.getSelectedLegoKeys();
         const selectedLego = selectedLegoKeys.map(key => this.legoData.find(el => el.key === key));
-        this.resizable.resizeItemGroup(eventStart, direction, this.selectable.selectionArea, selectedLego);
+        this.resize.resizeItemGroup(eventStart, direction, this.select.selectionArea, selectedLego);
     }
 
     snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey: string[] = [], directionHandler: 'start' | 'end' | 'none' = 'none'): void {
@@ -413,8 +413,8 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             ignoreAxisKey,
             isResize
         };
-        this.snappable.checkLegoInSnap({...params, axis: 'x', directionHandler});
-        this.snappable.checkLegoInSnap({...params, axis: 'y', directionHandler});
+        this.snap.checkLegoInSnap({...params, axis: 'x', directionHandler});
+        this.snap.checkLegoInSnap({...params, axis: 'y', directionHandler});
     }
 
     hiddenGuideLines(): void {
@@ -431,7 +431,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     updateSelectionArea(): void {
         this.markSelectedLegos();
         this.toggleSelectionGuidelines();
-        this.selectable.selectionAreaOfSelectedLegos();
+        this.select.selectionAreaOfSelectedLegos();
     }
 
     showGuideLines(axis: 'x' | 'y', position: number, parent: string): void {
@@ -477,7 +477,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.legoData = data;
         this.legoData.forEach(el => this.updateLegoViewData(el));
         this.resetGuideLines();
-        this.selectable.updateSelectionAreaBySelectedLego();
+        this.select.updateSelectionAreaBySelectedLego();
     }
 
     updateLegoViewData(item: LegoConfig) {
@@ -499,7 +499,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     markSelectedLegos() {
-        const selectedLegoKeys = this.selectable.getSelectedLegoKeys();
+        const selectedLegoKeys = this.select.getSelectedLegoKeys();
         const inGroupLego = selectedLegoKeys.length > 1;
         this.document.querySelectorAll('.lego-item.select').forEach(lego => this.renderer.removeClass(lego, 'select'));
         selectedLegoKeys
@@ -529,7 +529,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     private registerShortcuts() {
-        this.shortcuttable.registerShortcuts();
+        this.shortcut.registerShortcuts();
     }
 
     private fixScaleSize(): void {
@@ -553,7 +553,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     private validInitDrag(legoConfig: LegoConfig, isSelection: boolean): boolean {
         if (this.enableDrag) {
-            const selectedLegoKeys = this.selectable.getSelectedLegoKeys();
+            const selectedLegoKeys = this.select.getSelectedLegoKeys();
             if (!isSelection && selectedLegoKeys.length <= 1) {
                 this.selectAreaByLegos([legoConfig]);
             }
@@ -614,10 +614,10 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             }, 100);
         });
         this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown').subscribe(event => {
-            this.shortcuttable.onKeyDown(event);
+            this.shortcut.onKeyDown(event);
         });
         this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup').subscribe(event => {
-            this.shortcuttable.onKeyUp(event);
+            this.shortcut.onKeyUp(event);
         });
         this.registerShortcuts();
         this.legoData.forEach(lego => this.updateLegoViewData(lego));

@@ -2,7 +2,7 @@ import {runOutside} from '../util';
 import {CraftableComponent} from '../craftable.component';
 import {LegoConfig} from '../model';
 
-export class Resizable {
+export class Resize {
 
     constructor(private drawComponent: CraftableComponent) {
     }

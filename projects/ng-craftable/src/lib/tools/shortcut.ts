@@ -2,7 +2,7 @@ import {CraftableComponent} from '../craftable.component';
 
 type ShortcutList = { key: string | string[], action: (...any) => any }[]
 
-export class Shortcutable {
+export class Shortcut {
     constructor(private drawComponent: CraftableComponent) {
     }
 
