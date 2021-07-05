@@ -1,7 +1,4 @@
-import {Injectable} from '@angular/core';
-
-@Injectable()
-export class LocalHistoryService {
+export class LocalHistory {
     private timelinePoints = [];
     private transferArea = [];
     private indexStateNow = 0;

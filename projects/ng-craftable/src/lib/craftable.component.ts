@@ -30,8 +30,8 @@ import {Select} from './tools/select';
 import {Draw} from './tools/draw';
 import {Snap} from './tools/snap';
 import {LegoConfig, LinesGuide} from './model';
-import {LocalHistoryService} from './local-history.service';
 import {Shortcut} from './tools/shortcut';
+import {LocalHistory} from './tools/local-history';
 
 @Component({
     selector: 'ng-craftable',
@@ -97,13 +97,14 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     private draw: Draw;
     private snap: Snap;
     private shortcut: Shortcut;
+    private localHistory: LocalHistory;
 
     constructor(
         public renderer: Renderer2,
-        public localHistoryService: LocalHistoryService,
         @Inject(DOCUMENT) private document: Document,
         private cdr: ChangeDetectorRef
     ) {
+        this.localHistory = new LocalHistory();
         this.resize = new Resize(this);
         this.drag = new Drag(this);
         this.select = new Select(this);
@@ -151,28 +152,28 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
 
     undo() {
-        this.setLegoData(this.localHistoryService.undoPoint());
+        this.setLegoData(this.localHistory.undoPoint());
         this.detectChanges();
     }
 
     redo() {
-        this.setLegoData(this.localHistoryService.redoPoint());
+        this.setLegoData(this.localHistory.redoPoint());
         this.detectChanges();
     }
 
     copy() {
-        this.localHistoryService.setTransferArea(this.select.getSelectedLegos());
+        this.localHistory.setTransferArea(this.select.getSelectedLegos());
         this.detectChanges();
     }
 
     cut() {
-        this.localHistoryService.setTransferArea(this.select.getSelectedLegos());
+        this.localHistory.setTransferArea(this.select.getSelectedLegos());
         this.deleteSelection();
         this.detectChanges();
     }
 
     paste() {
-        const legos = this.localHistoryService.getTransferArea().map(lego => this.appendLego({...lego, x: lego.x + 10, y: lego.y + 10}));
+        const legos = this.localHistory.getTransferArea().map(lego => this.appendLego({...lego, x: lego.x + 10, y: lego.y + 10}));
         this.saveLocalHistory();
         this.detectChanges();
         setTimeout(() => this.selectAreaByLegos(legos), 300);
@@ -293,7 +294,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     saveLocalHistory() {
-        this.localHistoryService.addPoint(this.legoData);
+        this.localHistory.addPoint(this.legoData);
     }
 
     setScaleByScreen(): void {
