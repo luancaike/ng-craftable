@@ -51,7 +51,7 @@ export class Select {
             selectionArea.y = Math.round(selectionArea.y);
             selectionArea.width = Math.round(width);
             selectionArea.height = Math.round(height);
-            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, selectionArea.x, selectionArea.y, selectionArea.width, selectionArea.height);
+            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, selectionArea);
         });
         const dragEndSub = dragEnd$.subscribe(() => {
             if (!fastClick) {
@@ -110,7 +110,7 @@ export class Select {
         };
         if (selection.length >= 1) {
             this.drawComponent.renderer.addClass(this.drawComponent.selectionPreview, 'select');
-            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, this.selectionArea.x, this.selectionArea.y, this.selectionArea.width, this.selectionArea.height);
+            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, this.selectionArea);
         } else {
             this.drawComponent.toggleSelectionGuidelines(false);
         }

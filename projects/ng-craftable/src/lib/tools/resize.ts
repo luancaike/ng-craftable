@@ -79,7 +79,7 @@ export class Resize {
             itemResizing.height = Math.round(Math.max(this.drawComponent.minHeight, itemResizing.height));
             this.drawComponent.snapToGuideLine(itemResizing, true, selectionGroup.map(({key}) => key), directionHandler);
             this.drawComponent.updateLegoViewPositionAndSize(itemResizing);
-            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, itemResizing.x, itemResizing.y, itemResizing.width, itemResizing.height);
+            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, itemResizing);
             const newLegoGroupPosition = legoGroupDiffScale.map((oldLego) => ({
                 ...oldLego,
                 x: (itemResizing.width * oldLego.x) + itemResizing.x,

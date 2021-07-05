@@ -22,23 +22,26 @@ export class Drag {
     moveItem(eventStart: MouseEvent, itemToMove: LegoConfig, selectionGroup: LegoConfig[] = []) {
         this.itemToMove = itemToMove;
         this.selectionGroup = selectionGroup;
-
         this.initValues(eventStart);
-        this.drawComponent.removeGuideLinesByLego(this.itemToMove);
+        this.initDrawComponent();
         this.initEvents();
+    }
+
+    private initDrawComponent() {
+        this.drawComponent.isDragging = true;
+        this.drawComponent.removeGuideLinesByLego(this.itemToMove);
     }
 
     private initEvents() {
         const {dragEnd$, drag$} = this.drawComponent.getMouseEvents();
 
-        this.dragSub = drag$.subscribe(eventDrag => this.onDrag(eventDrag));
-        this.dragEndSub = dragEnd$.subscribe(() => this.onDragEnd());
+        this.dragSub = drag$.subscribe(eventDrag => this.dragging(eventDrag));
+        this.dragEndSub = dragEnd$.subscribe(() => this.dragEnd());
     }
 
     private initValues(eventStart: MouseEvent) {
         const {minBoundX, minBoundY} = this.drawComponent.getMaxAndMinBounds();
 
-        this.drawComponent.isDragging = true;
         this.minBoundX = minBoundX;
         this.minBoundY = minBoundY;
         this.positionInitialX = Math.round(this.itemToMove.x);
@@ -47,7 +50,7 @@ export class Drag {
         this.offsetY = ((eventStart.pageY - this.minBoundY) / this.drawComponent.scale) - this.itemToMove.y;
     }
 
-    private onDragEnd() {
+    private dragEnd() {
         this.drawComponent.hiddenGuideLines();
         this.drawComponent.updateLegoData(this.itemToMove);
         this.drawComponent.updateLegoViewData(this.itemToMove);
@@ -58,7 +61,7 @@ export class Drag {
         this.dragEndSub.unsubscribe();
     }
 
-    private onDrag(eventDrag: MouseEvent) {
+    private dragging(eventDrag: MouseEvent) {
         let newLegoGroupPosition = [];
         const newX = (eventDrag.pageX - this.minBoundX) / this.drawComponent.scale - this.offsetX;
         const newY = (eventDrag.pageY - this.minBoundY) / this.drawComponent.scale - this.offsetY;
@@ -76,6 +79,6 @@ export class Drag {
             this.drawComponent.updateLegoData(lego);
             this.drawComponent.updateLegoViewData(lego);
         });
-        this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, this.itemToMove.x, this.itemToMove.y, this.itemToMove.width, this.itemToMove.height);
+        this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, this.itemToMove);
     }
 }

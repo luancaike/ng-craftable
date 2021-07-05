@@ -308,9 +308,14 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         });
     }
 
-    toggleDrawGuidelines(show = true): void {
-        this.drawPreview.style.display = show ? 'block' : 'none';
-        this.setDrawGuidelines(this.drawPreview, null, null, 0, 0);
+    showDrawGuidelines(): void {
+        this.drawPreview.style.display = 'block';
+        this.setDrawGuidelines(this.drawPreview, {x: null, y: null, width: 0, height: 0});
+    }
+
+    hiddenDrawGuidelines(): void {
+        this.drawPreview.style.display = 'none';
+        this.setDrawGuidelines(this.drawPreview, {x: null, y: null, width: 0, height: 0});
     }
 
     getMaxAndMinBounds(): any {
@@ -338,10 +343,10 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             this.renderer.removeClass(this.selectionPreview, 'select');
         }
         this.selectionPreview.style.display = show ? 'block' : 'none';
-        this.setDrawGuidelines(this.selectionPreview, null, null, 0, 0);
+        this.setDrawGuidelines(this.selectionPreview, {x: null, y: null, width: 0, height: 0});
     }
 
-    setDrawGuidelines(element: HTMLElement, x = null, y = null, width = null, height = null): void {
+    setDrawGuidelines(element: HTMLElement, {x = null, y = null, width = null, height = null}): void {
         if (x !== null) {
             this.renderer.setStyle(element, 'left', `${x}px`);
         }
