@@ -1,54 +1,81 @@
 import {CraftableComponent} from '../craftable.component';
 import {Subscription} from 'rxjs';
 import {runOutside} from '../util';
-import { LegoConfig } from '../model';
+import {LegoConfig} from '../model';
 
 export class Drag {
+    private selectionGroup: LegoConfig[];
+    private itemToMove: LegoConfig;
+    private offsetX: number;
+    private offsetY: number;
+    private minBoundX: number;
+    private minBoundY: number;
+    private positionInitialX: number;
+    private positionInitialY: number;
+    private dragSub: Subscription;
+    private dragEndSub: Subscription;
 
     constructor(private drawComponent: CraftableComponent) {
     }
+
     @runOutside
-    moveItem(eventStart: MouseEvent, itemToMove, selectionGroup: LegoConfig[] = []) {
-        this.drawComponent.isDragging = true;
-        const {minBoundX, minBoundY} = this.drawComponent.getMaxAndMinBounds();
+    moveItem(eventStart: MouseEvent, itemToMove: LegoConfig, selectionGroup: LegoConfig[] = []) {
+        this.itemToMove = itemToMove;
+        this.selectionGroup = selectionGroup;
+
+        this.initValues(eventStart);
+        this.drawComponent.removeGuideLinesByLego(this.itemToMove);
+        this.initEvents();
+    }
+
+    private initEvents() {
         const {dragEnd$, drag$} = this.drawComponent.getMouseEvents();
-        const positionInitialX = Math.round(itemToMove.x);
-        const positionInitialY = Math.round(itemToMove.y);
-        const initialX = (eventStart.pageX - minBoundX) / this.drawComponent.scale;
-        const initialY = (eventStart.pageY - minBoundY) / this.drawComponent.scale;
-        const offsetX = initialX - itemToMove.x;
-        const offsetY = initialY - itemToMove.y;
-        let dragEndSub: Subscription;
+
+        this.dragSub = drag$.subscribe(eventDrag => this.onDrag(eventDrag));
+        this.dragEndSub = dragEnd$.subscribe(() => this.onDragEnd());
+    }
+
+    private initValues(eventStart: MouseEvent) {
+        const {minBoundX, minBoundY} = this.drawComponent.getMaxAndMinBounds();
+
+        this.drawComponent.isDragging = true;
+        this.minBoundX = minBoundX;
+        this.minBoundY = minBoundY;
+        this.positionInitialX = Math.round(this.itemToMove.x);
+        this.positionInitialY = Math.round(this.itemToMove.y);
+        this.offsetX = ((eventStart.pageX - this.minBoundX) / this.drawComponent.scale) - this.itemToMove.x;
+        this.offsetY = ((eventStart.pageY - this.minBoundY) / this.drawComponent.scale) - this.itemToMove.y;
+    }
+
+    private onDragEnd() {
+        this.drawComponent.hiddenGuideLines();
+        this.drawComponent.updateLegoData(this.itemToMove);
+        this.drawComponent.updateLegoViewData(this.itemToMove);
+        this.drawComponent.saveLocalHistory();
+        this.drawComponent.updateSelectionArea();
+        this.drawComponent.isDragging = false;
+        this.dragSub.unsubscribe();
+        this.dragEndSub.unsubscribe();
+    }
+
+    private onDrag(eventDrag: MouseEvent) {
         let newLegoGroupPosition = [];
-        this.drawComponent.removeGuideLinesByLego(itemToMove);
-        const dragSub = drag$.subscribe(eventDrag => {
-            const newX = (eventDrag.pageX - minBoundX) / this.drawComponent.scale - offsetX;
-            const newY = (eventDrag.pageY - minBoundY) / this.drawComponent.scale - offsetY;
-            itemToMove.x = this.drawComponent.fixByGridSize(newX);
-            itemToMove.y = this.drawComponent.fixByGridSize(newY);
-            this.drawComponent.snapToGuideLine(itemToMove, false, selectionGroup.map(({key}) => key));
-            this.drawComponent.updateLegoViewPositionAndSize(itemToMove);
-            newLegoGroupPosition = selectionGroup.map((lego) => ({
-                ...lego,
-                x: Math.round(lego.x + (itemToMove.x - positionInitialX)),
-                y: Math.round(lego.y + (itemToMove.y - positionInitialY)),
-            }));
-            newLegoGroupPosition.forEach((lego) => {
-                this.drawComponent.updateLegoViewPositionAndSize(lego);
-                this.drawComponent.updateLegoData(lego);
-                this.drawComponent.updateLegoViewData(lego);
-            });
-            this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, itemToMove.x, itemToMove.y, itemToMove.width, itemToMove.height);
+        const newX = (eventDrag.pageX - this.minBoundX) / this.drawComponent.scale - this.offsetX;
+        const newY = (eventDrag.pageY - this.minBoundY) / this.drawComponent.scale - this.offsetY;
+        this.itemToMove.x = this.drawComponent.fixByGridSize(newX);
+        this.itemToMove.y = this.drawComponent.fixByGridSize(newY);
+        this.drawComponent.snapToGuideLine(this.itemToMove, false, this.selectionGroup.map(({key}) => key));
+        this.drawComponent.updateLegoViewPositionAndSize(this.itemToMove);
+        newLegoGroupPosition = this.selectionGroup.map((lego) => ({
+            ...lego,
+            x: Math.round(lego.x + (this.itemToMove.x - this.positionInitialX)),
+            y: Math.round(lego.y + (this.itemToMove.y - this.positionInitialY)),
+        }));
+        newLegoGroupPosition.forEach((lego) => {
+            this.drawComponent.updateLegoViewPositionAndSize(lego);
+            this.drawComponent.updateLegoData(lego);
+            this.drawComponent.updateLegoViewData(lego);
         });
-        dragEndSub = dragEnd$.subscribe(() => {
-            this.drawComponent.hiddenGuideLines();
-            this.drawComponent.updateLegoData(itemToMove);
-            this.drawComponent.updateLegoViewData(itemToMove);
-            this.drawComponent.saveLocalHistory();
-            this.drawComponent.updateSelectionArea();
-            dragSub.unsubscribe();
-            dragEndSub.unsubscribe();
-            this.drawComponent.isDragging = false;
-        });
+        this.drawComponent.setDrawGuidelines(this.drawComponent.selectionPreview, this.itemToMove.x, this.itemToMove.y, this.itemToMove.width, this.itemToMove.height);
     }
 }
