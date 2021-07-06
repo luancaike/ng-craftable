@@ -1,7 +1,8 @@
 {
   "compileOnSave": false,
   "angularCompilerOptions": {
-    "strictMetadataEmit": true
+    "strictMetadataEmit": true,
+      "preserveSymlinks": true
   },
   "compilerOptions": {
     "baseUrl": "./",
@@ -19,11 +20,14 @@
       "dom"
     ],
     "paths": {
-      "ng-craftable": [
-        "dist/ng-craftable/ng-craftable",
-        "dist/ng-craftable",
-        "projects/ng-craftable/src/public-api"
-      ]
+        "@angular/*": [
+            "../node_modules/@angular/*"
+        ],
+        "ng-craftable": [
+            "dist/ng-craftable/ng-craftable",
+            "dist/ng-craftable",
+            "projects/ng-craftable/src/public-api"
+        ]
     }
   }
 }

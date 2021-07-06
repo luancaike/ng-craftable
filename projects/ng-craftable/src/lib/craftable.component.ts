@@ -98,12 +98,14 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     private snap: Snap;
     private shortcut: Shortcut;
     private localHistory: LocalHistory;
+    private document: Document;
 
     constructor(
         public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
+        @Inject(DOCUMENT) _document: any,
         private cdr: ChangeDetectorRef
     ) {
+        this.document = _document
         this.localHistory = new LocalHistory();
         this.resize = new Resize(this);
         this.drag = new Drag(this);
