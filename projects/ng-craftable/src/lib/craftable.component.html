@@ -17,12 +17,13 @@
              (mousedown)="resizeHandler($event,'right bottom')"></div>
     </div>
 </ng-template>
-
-<div class="main-area"
-     [class.draw-mode]="enableDraw"
-     [class.drag-mode]="isDragging"
-     [class.visualization]="visualizationMode"
-     #mainArea (mousedown)="mouseDownInMainArea($event)">
+<div
+    #mainArea
+    class="main-area"
+    [class.draw-mode]="enableDraw"
+    [class.drag-mode]="isDragging"
+    [class.visualization]="visualizationMode"
+>
     <div class="align-wrapper">
         <div class="scale-wrapper">
             <div class="guide-container" #guideContainer>

@@ -85,7 +85,7 @@ export class Shortcut {
                 action: () => this.drawComponent.unSelectAll()
             },
             {
-                key: ['Backspace', 'Delete'],
+                key: ['Delete'],
                 action: () => this.drawComponent.deleteSelection()
             },
         ];

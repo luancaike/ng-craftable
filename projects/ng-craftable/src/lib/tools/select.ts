@@ -66,7 +66,10 @@ export class Select {
         });
     }
 
-    getSelectedLegos() {
+    getSelectedLegos(): LegoConfig[] {
+        if(!this.selectedLegoKeys) {
+            return []
+        }
         return this.selectedLegoKeys.reduce((acc, key) => {
             const result = this.drawComponent.legoData.find(el => el.key === key);
             if (result) {

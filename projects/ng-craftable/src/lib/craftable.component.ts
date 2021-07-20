@@ -69,6 +69,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     public isDragging = false;
     public isDrawing = false;
     public isResizing = false;
+    public isInFocus = false;
 
     public lineGuides: LinesGuide = {
         x: [],
@@ -138,6 +139,14 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     /**
      *  Public Api
      */
+    getLegoById(key: string): LegoConfig | undefined {
+        return this.legoData.find(el => el.key === key);
+    }
+
+    getSelectedLegos(): LegoConfig[] {
+        return this.select.getSelectedLegos();
+    }
+
     selectAll(): void {
         if (!this.checkInInteractionOrVisualizationMode()) {
             this.selectAreaByLegos(this.legoData);
@@ -235,10 +244,11 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     moveLego(keyboardKey: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight') {
+        console.log(keyboardKey);
         const keysActions = {
             ArrowUp: (lego) => lego.y -= (this.gridSize + (lego.y % this.gridSize)),
-            ArrowDown: (lego) => lego.x -= (this.gridSize + (lego.x % this.gridSize)),
-            ArrowLeft: (lego) => lego.y -= (this.gridSize + (lego.y % this.gridSize)),
+            ArrowDown: (lego) => lego.y += (this.gridSize + (lego.x % this.gridSize)),
+            ArrowLeft: (lego) => lego.x -= (this.gridSize + (lego.y % this.gridSize)),
             ArrowRight: (lego) => lego.x += (this.gridSize - (lego.x % this.gridSize))
         };
         this.select.getSelectedLegos().forEach(lego => {
@@ -406,7 +416,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
             return;
         }
         const selectedLegoKeys = this.select.getSelectedLegoKeys();
-        const selectedLego = selectedLegoKeys.map(key => this.legoData.find(el => el.key === key));
+        const selectedLego = selectedLegoKeys.map(key => this.getLegoById(key));
         this.resize.resizeItemGroup(eventStart, direction, this.select.selectionArea, selectedLego);
     }
 
@@ -620,11 +630,24 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
                 this.setScaleByScreen();
             }, 100);
         });
-        this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown').subscribe(event => {
-            this.shortcut.onKeyDown(event);
-        });
-        this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup').subscribe(event => {
-            this.shortcut.onKeyUp(event);
+        this.keyDown$ = fromEvent<KeyboardEvent>(this.document, 'keydown')
+            .subscribe(event => {
+                if (this.isInFocus) {
+                    this.shortcut.onKeyDown(event);
+
+                }
+            });
+
+        this.keyUp$ = fromEvent<KeyboardEvent>(this.document, 'keyup')
+            .subscribe(event => {
+                if (this.isInFocus) {
+                    this.shortcut.onKeyUp(event);
+                }
+            });
+
+        fromEvent<MouseEvent>(this.document, 'mousedown').subscribe(event => {
+            this.isInFocus = this.mainArea === event.target || this.mainArea.contains(event.target as Node);
+            this.mouseDownInMainArea(event);
         });
         this.registerShortcuts();
         this.legoData.forEach(lego => this.updateLegoViewData(lego));
