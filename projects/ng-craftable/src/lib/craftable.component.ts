@@ -647,7 +647,6 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
         fromEvent<MouseEvent>(this.document, 'mousedown').subscribe(event => {
             this.isInFocus = this.mainArea === event.target || this.mainArea.contains(event.target as Node);
-            this.mouseDownInMainArea(event);
         });
         this.registerShortcuts();
         this.legoData.forEach(lego => this.updateLegoViewData(lego));

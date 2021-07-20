@@ -23,6 +23,7 @@
     [class.draw-mode]="enableDraw"
     [class.drag-mode]="isDragging"
     [class.visualization]="visualizationMode"
+    (mousedown)="mouseDownInMainArea($event)"
 >
     <div class="align-wrapper">
         <div class="scale-wrapper">
