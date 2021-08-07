@@ -56,8 +56,10 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     @Input() public enableResize = true;
     @Input() public enableDrag = true;
     @Input() public drawItemData: { [k: string]: any };
-    @Input() public enableStepGrid = false;
+    @Input() public enableStepGrid = true;
+    @Input() public enableSmartGuides = false;
     @Input() public enableDraw = false;
+    @Input() public enableSelect = true;
     @Input() public visualizationMode = false;
     @Input() public scale = 1;
 
@@ -272,6 +274,9 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     selectAreaByLegos(items: LegoConfig[]): void {
+        if (!this.enableSelect) {
+            return;
+        }
         if (!this.checkInInteractionOrVisualizationMode()) {
             const keys = items.map(({key}) => key);
             this.select.setSelectedLegoKeys(keys);
@@ -376,14 +381,16 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
 
     @runOutside
     mouseDownInMainArea($event: MouseEvent): void {
-        if (this.visualizationMode || this.isDragging || this.isResizing) {
+        if (this.visualizationMode || this.isDragging || this.isResizing || !this.enableSelect) {
             return;
         }
+
         if (this.enableDraw) {
             this.drawHandler($event);
         } else {
             this.selectionHandler($event);
         }
+
         const selectionPreview = this.document.querySelector('.selection-preview');
         const isNotSelectionPreview = !(selectionPreview === $event.target || selectionPreview.contains($event.target as Node));
         const isNotLegoOrLegoChild = !this.legoList.find(
@@ -422,6 +429,9 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     }
 
     snapToGuideLine(lego: LegoConfig, isResize = false, ignoreAxisKey: string[] = [], directionHandler: 'start' | 'end' | 'none' = 'none'): void {
+        if (!this.enableSmartGuides) {
+            return;
+        }
         this.hiddenGuideLines();
         const params = {
             lineGuides: this.lineGuides,
