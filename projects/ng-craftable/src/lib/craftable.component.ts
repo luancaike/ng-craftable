@@ -42,6 +42,7 @@ import {LocalHistory} from './tools/local-history';
 })
 export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
     @ContentChild('template', {read: TemplateRef}) template: TemplateRef<any>;
+    @ContentChild('overlay', {read: TemplateRef}) overlay: TemplateRef<any>;
     @ViewChildren('lego') private legoList!: QueryList<ElementRef<HTMLElement>>;
     @ViewChild('canvasContainer') private canvasContainerRef: ElementRef<HTMLElement>;
     @ViewChild('mainArea') private mainAreaRef: ElementRef<HTMLElement>;
@@ -237,7 +238,7 @@ export class CraftableComponent implements AfterViewInit, OnDestroy, OnChanges {
         this.detectChanges();
     }
 
-    drawNewLego(dataToDraw = {}) {
+    drawNewLego(dataToDraw: LegoConfig & { [key: string]: any } = {}) {
         this.enableDraw = true;
         this.drawItemData = dataToDraw;
         this.detectChanges();

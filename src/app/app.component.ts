@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, ViewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, TemplateRef, ViewChild} from '@angular/core';
 import {CraftableComponent} from 'ng-craftable';
 
 @Component({
@@ -135,7 +135,7 @@ import {CraftableComponent} from 'ng-craftable';
                 </div>
             </div>
             <div class="workspace">
-                <ng-craftable #craftable [visualizationMode]="visualizationMode">
+                <ng-craftable #craftable [visualizationMode]="visualizationMode" [enableStepGrid]="true">
                     <ng-template #template let-data>
                         <div class="card h-100" style="min-width: 200px">
                             <div class="card-header">
@@ -151,6 +151,10 @@ import {CraftableComponent} from 'ng-craftable';
                             </div>
                         </div>
                     </ng-template>
+                    <ng-template #overlay let-data>
+                        <button>TESTE</button>
+                        {{data| json}}
+                    </ng-template>
                 </ng-craftable>
             </div>
             <div class="sidebar"></div>
@@ -160,9 +164,11 @@ import {CraftableComponent} from 'ng-craftable';
 })
 export class AppComponent {
     @ViewChild('craftable') craftable: CraftableComponent;
-    visualizationMode = false;
+    @ViewChild('legoOverlay') legoOverlay: TemplateRef<any>;
+
+    public visualizationMode = false;
 
     drawNewLego() {
-        this.craftable.drawNewLego({teste: 'ABC'});
+        this.craftable.drawNewLego({teste: 'ABC', overlay: this.legoOverlay});
     }
 }

@@ -44,6 +44,9 @@
                                 <ng-template *ngTemplateOutlet="template; context: {$implicit: item}"></ng-template>
                             </ng-container>
                         </div>
+                        <div class="lego-overlay" *ngIf="overlay">
+                            <ng-template *ngTemplateOutlet="overlay; context: {$implicit: item}"></ng-template>
+                        </div>
                     </div>
                 </ng-container>
                 <div class="draw-preview">
